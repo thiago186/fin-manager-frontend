@@ -66,9 +66,9 @@ export interface Transaction {
   installment_group_id: string | null
   created_at: string
   updated_at: string
-  account: Account
+  account: Account | null
   account_id?: number | null
-  credit_card: CreditCard
+  credit_card: CreditCard | null
   credit_card_id?: number | null
   category: CategoryList
   category_id?: number | null
@@ -94,9 +94,9 @@ export interface PatchedTransaction {
   installment_group_id?: string | null
   created_at?: string
   updated_at?: string
-  account?: Account
+  account?: Account | null
   account_id?: number | null
-  credit_card?: CreditCard
+  credit_card?: CreditCard | null
   credit_card_id?: number | null
   category?: CategoryList
   category_id?: number | null
@@ -238,8 +238,8 @@ export const isTransaction = (value: any): value is Transaction => {
     typeof value.installment_number === 'number' &&
     typeof value.created_at === 'string' &&
     typeof value.updated_at === 'string' &&
-    typeof value.account === 'object' &&
-    typeof value.credit_card === 'object' &&
+    (value.account === null || typeof value.account === 'object') &&
+    (value.credit_card === null || typeof value.credit_card === 'object') &&
     typeof value.category === 'object' &&
     (value.subcategory === null || typeof value.subcategory === 'object') &&
     Array.isArray(value.tags)

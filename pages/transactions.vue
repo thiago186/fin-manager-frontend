@@ -328,9 +328,9 @@
                   {{ transaction.subcategory?.name || '-' }}
                 </td>
 
-                <!-- Account -->
+                <!-- Account/Credit Card -->
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ transaction.account.name }}
+                  {{ transaction.account?.name || transaction.credit_card?.name || '-' }}
                 </td>
 
                 <!-- Amount -->

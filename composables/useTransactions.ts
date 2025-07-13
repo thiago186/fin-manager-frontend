@@ -211,7 +211,8 @@ export const useTransactions = () => {
         transaction.description?.toLowerCase().includes(searchTerm) ||
         transaction.category.name.toLowerCase().includes(searchTerm) ||
         transaction.subcategory?.name.toLowerCase().includes(searchTerm) ||
-        transaction.account.name.toLowerCase().includes(searchTerm)
+        transaction.account?.name.toLowerCase().includes(searchTerm) ||
+        transaction.credit_card?.name.toLowerCase().includes(searchTerm)
       )
     }
 
@@ -226,6 +227,13 @@ export const useTransactions = () => {
     if (filters.value.account_id) {
       filtered = filtered.filter(transaction => 
         transaction.account_id === filters.value.account_id
+      )
+    }
+
+    // Apply credit card filter
+    if (filters.value.credit_card_id) {
+      filtered = filtered.filter(transaction => 
+        transaction.credit_card_id === filters.value.credit_card_id
       )
     }
 
