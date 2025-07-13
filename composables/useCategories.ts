@@ -30,7 +30,7 @@ export const useCategories = () => {
         params.append('parent', filters.parent === null ? 'null' : String(filters.parent))
       }
 
-      const response = await $fetch<CategoryList[]>(`/accounts/categories/?${params}`, {
+      const response = await $fetch<CategoryList[]>(`/finance/categories/?${params}`, {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
@@ -53,7 +53,7 @@ export const useCategories = () => {
   // Load all categories for parent selection
   const loadParentCategories = async (): Promise<CategoryApiResult<CategoryList[]>> => {
     try {
-      const response = await $fetch<CategoryList[]>('/accounts/categories/top_level/', {
+      const response = await $fetch<CategoryList[]>('/finance/categories/top_level/', {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
@@ -77,7 +77,7 @@ export const useCategories = () => {
     error.value = null
     
     try {
-      const response = await $fetch<CategoryList>('/accounts/categories/', {
+      const response = await $fetch<CategoryList>('/finance/categories/', {
         baseURL: config.public.apiBase,
         method: 'POST',
         body: categoryData,
@@ -108,7 +108,7 @@ export const useCategories = () => {
     error.value = null
     
     try {
-      const response = await $fetch<CategoryList>(`/accounts/categories/${id}/`, {
+      const response = await $fetch<CategoryList>(`/finance/categories/${id}/`, {
         baseURL: config.public.apiBase,
         method: 'PUT',
         body: categoryData,
@@ -139,7 +139,7 @@ export const useCategories = () => {
     error.value = null
     
     try {
-      await $fetch(`/accounts/categories/${id}/`, {
+      await $fetch(`/finance/categories/${id}/`, {
         baseURL: config.public.apiBase,
         method: 'DELETE',
         credentials: 'include'
@@ -166,7 +166,7 @@ export const useCategories = () => {
   // Get category by ID
   const getCategory = async (id: number): Promise<CategoryApiResult<CategoryList>> => {
     try {
-      const response = await $fetch<CategoryList>(`/accounts/categories/${id}/`, {
+      const response = await $fetch<CategoryList>(`/finance/categories/${id}/`, {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })

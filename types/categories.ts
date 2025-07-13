@@ -20,7 +20,7 @@ export interface BaseCategory {
 
 /**
  * Full category interface for detailed operations
- * Used for GET /api/v1/accounts/categories/{id}/ and POST responses
+ * Used for GET /api/v1/finance/categories/{id}/ and POST responses
  */
 export interface Category extends BaseCategory {
   // All properties from BaseCategory are inherited
@@ -28,7 +28,7 @@ export interface Category extends BaseCategory {
 
 /**
  * Category list interface for listing operations
- * Used for GET /api/v1/accounts/categories/ responses
+ * Used for GET /api/v1/finance/categories/ responses
  */
 export interface CategoryList {
   id: number
@@ -40,7 +40,7 @@ export interface CategoryList {
 
 /**
  * Category detail interface for detailed category information
- * Used for GET /api/v1/accounts/categories/{id}/ responses
+ * Used for GET /api/v1/finance/categories/{id}/ responses
  */
 export interface CategoryDetail extends BaseCategory {
   subcategories: Record<string, any>[] // Array of subcategory objects
@@ -49,7 +49,7 @@ export interface CategoryDetail extends BaseCategory {
 
 /**
  * Patched category interface for partial updates
- * Used for PATCH /api/v1/accounts/categories/{id}/ requests
+ * Used for PATCH /api/v1/finance/categories/{id}/ requests
  */
 export interface PatchedCategory {
   id?: number
@@ -65,7 +65,7 @@ export interface PatchedCategory {
 
 /**
  * Category creation request interface
- * Used for POST /api/v1/accounts/categories/ requests
+ * Used for POST /api/v1/finance/categories/ requests
  */
 export interface CreateCategoryRequest {
   name: string
@@ -77,7 +77,7 @@ export interface CreateCategoryRequest {
 
 /**
  * Category update request interface
- * Used for PUT /api/v1/accounts/categories/{id}/ requests
+ * Used for PUT /api/v1/finance/categories/{id}/ requests
  */
 export interface UpdateCategoryRequest {
   name: string
