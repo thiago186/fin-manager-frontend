@@ -105,7 +105,7 @@
                     class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
                     <option value="">Selecione um cartão</option>
-                    <option v-for="card in creditCards" :key="card.id" :value="card.id">
+                    <option v-for="card in creditCards.filter(c => c.is_active)" :key="card.id" :value="card.id">
                       {{ card.name }}
                     </option>
                   </select>
@@ -277,10 +277,8 @@ const error = ref<string | null>(null)
 // Get accounts from the accounts composable
 const { accounts, loadAccounts } = useAccounts()
 
-const creditCards = ref([
-  { id: 1, name: 'Nubank' },
-  { id: 2, name: 'Itaú' }
-])
+// Get credit cards from the credit cards composable
+const { creditCards, loadCreditCards } = useCreditCards()
 
 // Form state
 const form = ref<TransactionForm>({
@@ -393,7 +391,7 @@ const handleSubmit = async () => {
 
 // Initialize
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadAccounts()])
+  await Promise.all([loadCategories(), loadAccounts(), loadCreditCards()])
   initializeForm()
 })
 
