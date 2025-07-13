@@ -89,7 +89,7 @@
                     class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
                     <option value="">Selecione uma conta</option>
-                    <option v-for="account in accounts" :key="account.id" :value="account.id">
+                    <option v-for="account in accounts.filter(a => a.is_active)" :key="account.id" :value="account.id">
                       {{ account.name }} - {{ formatCurrency(account.current_balance) }}
                     </option>
                   </select>
@@ -274,11 +274,8 @@ const { categories, loadCategories } = useCategories()
 const isSubmitting = ref(false)
 const error = ref<string | null>(null)
 
-// Mock data for accounts and credit cards (you'll need to create composables for these)
-const accounts = ref([
-  { id: 1, name: 'Conta Corrente', current_balance: '1000.00' },
-  { id: 2, name: 'Conta Poupança', current_balance: '5000.00' }
-])
+// Get accounts from the accounts composable
+const { accounts, loadAccounts } = useAccounts()
 
 const creditCards = ref([
   { id: 1, name: 'Nubank' },
@@ -396,7 +393,7 @@ const handleSubmit = async () => {
 
 // Initialize
 onMounted(async () => {
-  await loadCategories()
+  await Promise.all([loadCategories(), loadAccounts()])
   initializeForm()
 })
 
