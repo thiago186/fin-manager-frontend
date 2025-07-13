@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="bg-white shadow rounded-lg p-6 mb-8">
@@ -8,12 +8,6 @@
             <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p class="text-gray-600 mt-2">Welcome to your personal finance dashboard</p>
           </div>
-          <button
-            @click="logout"
-            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
-          >
-            Logout
-          </button>
         </div>
       </div>
 
@@ -73,9 +67,12 @@
         <div class="bg-white shadow rounded-lg p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
           <div class="space-y-3">
-            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
+            <NuxtLink
+              to="/transactions"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors inline-block text-center"
+            >
               Add Transaction
-            </button>
+            </NuxtLink>
             <button class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors">
               Add Income
             </button>
@@ -84,6 +81,12 @@
               class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors inline-block text-center"
             >
               Manage Categories
+            </NuxtLink>
+            <NuxtLink
+              to="/transactions"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors inline-block text-center"
+            >
+              View Transactions
             </NuxtLink>
             <button class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md transition-colors">
               View Reports

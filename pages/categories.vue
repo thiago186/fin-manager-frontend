@@ -1,28 +1,26 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-6">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">Categories</h1>
-            <p class="mt-1 text-sm text-gray-500">Manage your income and expense categories</p>
-          </div>
-          <button
-            @click="showCreateModal = true"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Add Category
-          </button>
+  <div class="py-8">
+    <!-- Page Header -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Categories</h1>
+          <p class="mt-1 text-sm text-gray-500">Manage your income and expense categories</p>
         </div>
+        <button
+          @click="showCreateModal = true"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Add Category
+        </button>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex flex-wrap gap-4">
           <div class="flex-1 min-w-48">
