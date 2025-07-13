@@ -411,6 +411,7 @@
 </template>
 
 <script setup lang="ts">
+import TransactionModal from '~/components/TransactionModal.vue'
 import {
   PlusIcon,
   DocumentTextIcon,

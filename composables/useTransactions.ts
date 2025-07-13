@@ -44,7 +44,12 @@ export const useTransactions = () => {
         params.append('transaction_type', apiFilters.transaction_type)
       }
 
-      const response = await $fetch<Transaction[]>(`/finance/transactions/?${params}`, {
+      const query = params.toString()
+      const url = query
+        ? `/finance/transactions/?${query}`
+        : '/finance/transactions/'
+
+      const response = await $fetch<Transaction[]>(url, {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
