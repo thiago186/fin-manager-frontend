@@ -50,6 +50,7 @@ export const useTransactions = () => {
       })
       
       transactions.value = response
+      console.log('Transactions loaded:', response)
       return { success: true, data: response }
     } catch (err: any) {
       const errorMessage = err?.data?.message || 'Failed to load transactions'
@@ -202,6 +203,7 @@ export const useTransactions = () => {
 
   // Get filtered and sorted transactions
   const getFilteredTransactions = computed(() => {
+    console.log('Computing filtered transactions, total:', transactions.value.length)
     let filtered = [...transactions.value]
 
     // Apply search filter
@@ -209,7 +211,7 @@ export const useTransactions = () => {
       const searchTerm = filters.value.search.toLowerCase()
       filtered = filtered.filter(transaction => 
         transaction.description?.toLowerCase().includes(searchTerm) ||
-        transaction.category.name.toLowerCase().includes(searchTerm) ||
+        transaction.category?.name.toLowerCase().includes(searchTerm) ||
         transaction.subcategory?.name.toLowerCase().includes(searchTerm) ||
         transaction.account?.name.toLowerCase().includes(searchTerm) ||
         transaction.credit_card?.name.toLowerCase().includes(searchTerm)
@@ -381,7 +383,9 @@ export const useTransactions = () => {
 
   // Initialize transactions data
   const initialize = async (): Promise<void> => {
+    console.log('Initializing transactions...')
     await loadTransactions()
+    console.log('Initialization complete, loading:', loading.value)
   }
 
   return {

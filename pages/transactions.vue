@@ -230,6 +230,7 @@
         <!-- Loading State -->
         <div v-if="loading" class="flex justify-center items-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span class="ml-2">Loading transactions...</span>
         </div>
 
         <!-- Error State -->
@@ -320,7 +321,7 @@
 
                 <!-- Category -->
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ transaction.category.name }}
+                  {{ transaction.category?.name || '-' }}
                 </td>
 
                 <!-- Subcategory -->
@@ -466,7 +467,7 @@ const tableColumns = [
   { key: 'description', label: 'Descrição', sortable: false, width: '200px' },
   { key: 'category', label: 'Categoria', sortable: false, width: '120px' },
   { key: 'subcategory', label: 'Subcategoria', sortable: false, width: '120px' },
-  { key: 'account', label: 'Conta', sortable: false, width: '150px' },
+  { key: 'account', label: 'Conta/Cartão', sortable: false, width: '150px' },
   { key: 'amount', label: 'Valor', sortable: true, width: '120px', align: 'right' },
   { key: 'installments', label: 'Parcelas', sortable: false, width: '80px', align: 'center' },
   { key: 'actions', label: 'Ações', sortable: false, width: '100px', align: 'right' }
