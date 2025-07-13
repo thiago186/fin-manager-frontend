@@ -210,7 +210,7 @@ export const useTransactions = () => {
       filtered = filtered.filter(transaction => 
         transaction.description?.toLowerCase().includes(searchTerm) ||
         transaction.category.name.toLowerCase().includes(searchTerm) ||
-        transaction.subcategory.name.toLowerCase().includes(searchTerm) ||
+        transaction.subcategory?.name.toLowerCase().includes(searchTerm) ||
         transaction.account.name.toLowerCase().includes(searchTerm)
       )
     }

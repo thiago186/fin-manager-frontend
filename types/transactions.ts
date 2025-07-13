@@ -72,7 +72,7 @@ export interface Transaction {
   credit_card_id?: number | null
   category: CategoryList
   category_id?: number | null
-  subcategory: CategoryList
+  subcategory: CategoryList | null
   subcategory_id?: number | null
   tags: Tag[]
   tag_ids?: number[]
@@ -100,7 +100,7 @@ export interface PatchedTransaction {
   credit_card_id?: number | null
   category?: CategoryList
   category_id?: number | null
-  subcategory?: CategoryList
+  subcategory?: CategoryList | null
   subcategory_id?: number | null
   tags?: Tag[]
   tag_ids?: number[]
@@ -241,7 +241,7 @@ export const isTransaction = (value: any): value is Transaction => {
     typeof value.account === 'object' &&
     typeof value.credit_card === 'object' &&
     typeof value.category === 'object' &&
-    typeof value.subcategory === 'object' &&
+    (value.subcategory === null || typeof value.subcategory === 'object') &&
     Array.isArray(value.tags)
   )
 }
