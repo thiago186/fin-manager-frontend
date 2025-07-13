@@ -194,7 +194,7 @@ export const useCategories = () => {
 
   // Get parent category name by ID
   const getParentName = (parentId: number): string => {
-    const parent = categories.value.find(cat => cat.id === parentId)
+    const parent = parentCategories.value.find(cat => cat.id === parentId)
     return parent ? parent.name : 'Unknown'
   }
 
