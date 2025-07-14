@@ -331,7 +331,13 @@
 
                 <!-- Account/Credit Card -->
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ transaction.account?.name || transaction.credit_card?.name || '-' }}
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                      <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
+                      <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
+                  </div>
                 </td>
 
                 <!-- Amount -->
@@ -424,7 +430,9 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  BanknotesIcon,
+  CreditCardIcon
 } from '@heroicons/vue/24/outline'
 
 import type { Transaction, TransactionTableFilters, TransactionTableSort } from '~/types/transactions'
