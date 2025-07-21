@@ -308,8 +308,9 @@ export const useTransactions = () => {
 
   // Calculate transaction statistics
   const getTransactionStats = computed(() => {
+    const filtered = getFilteredTransactions.value
     const stats = {
-      total_transactions: transactions.value.length,
+      total_transactions: filtered.length,
       total_income: '0.00',
       total_expenses: '0.00',
       total_transfers: '0.00',
@@ -318,7 +319,7 @@ export const useTransactions = () => {
       transfer_count: 0
     }
 
-    transactions.value.forEach(transaction => {
+    filtered.forEach(transaction => {
       const amount = parseFloat(transaction.amount)
       
       switch (transaction.transaction_type) {
