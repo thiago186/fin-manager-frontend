@@ -1,4 +1,5 @@
 import type { 
+  Category,
   CategoryList, 
   CategoryForm, 
   CategoryFilters, 
@@ -11,13 +12,13 @@ export const useCategories = () => {
   const config = useRuntimeConfig()
   
   // State
-  const categories = ref<CategoryList[]>([])
+  const categories = ref<Category[]>([])
   const parentCategories = ref<CategoryList[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
   // Load categories with optional filters
-  const loadCategories = async (filters?: CategoryFilters): Promise<CategoryApiResult<CategoryList[]>> => {
+  const loadCategories = async (filters?: CategoryFilters): Promise<CategoryApiResult<Category[]>> => {
     loading.value = true
     error.value = null
     
@@ -30,7 +31,7 @@ export const useCategories = () => {
         params.append('parent', filters.parent === null ? 'null' : String(filters.parent))
       }
 
-      const response = await $fetch<CategoryList[]>(`/finance/categories/?${params}`, {
+      const response = await $fetch<Category[]>(`/finance/categories/?${params}`, {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
