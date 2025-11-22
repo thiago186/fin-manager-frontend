@@ -336,10 +336,10 @@ const initializeForm = () => {
       charge_at_card: props.transaction.charge_at_card || '',
       installments_total: String(props.transaction.installments_total),
       installment_number: String(props.transaction.installment_number),
-      account_id: props.transaction.account_id ?? null,
-      credit_card_id: props.transaction.credit_card_id ?? null,
-      category_id: props.transaction.category_id ?? null,
-      subcategory_id: props.transaction.subcategory_id ?? null,
+      account_id: props.transaction.account_id ? String(props.transaction.account_id) : null,
+      credit_card_id: props.transaction.credit_card_id ? String(props.transaction.credit_card_id) : null,
+      category_id: props.transaction.category_id ? String(props.transaction.category_id) : null,
+      subcategory_id: props.transaction.subcategory_id ? String(props.transaction.subcategory_id) : null,
       tag_ids: props.transaction.tag_ids || []
     }
   } else {
@@ -392,7 +392,10 @@ const handleSubmit = async () => {
 // Initialize
 onMounted(async () => {
   await Promise.all([loadCategories(), loadAccounts(), loadCreditCards()])
-  initializeForm()
+  // Only initialize form if not editing (for new transactions)
+  if (!props.isEdit) {
+    initializeForm()
+  }
 })
 
 // Watch for transaction type changes to reset category selection
@@ -405,5 +408,27 @@ watch(() => form.value.transaction_type, () => {
 // Watch for category changes to load subcategories
 watch(() => form.value.category_id, () => {
   loadSubcategories()
+})
+
+// Watch for transaction prop changes to re-initialize form when editing
+watch(() => props.transaction, () => {
+  if (props.transaction && props.isEdit) {
+    initializeForm()
+    // Load subcategories if category is set
+    if (props.transaction.category_id) {
+      loadSubcategories()
+    }
+  }
+}, { immediate: true })
+
+// Watch for isEdit prop changes to re-initialize form
+watch(() => props.isEdit, () => {
+  if (props.isEdit && props.transaction) {
+    initializeForm()
+    // Load subcategories if category is set
+    if (props.transaction.category_id) {
+      loadSubcategories()
+    }
+  }
 })
 </script> 
