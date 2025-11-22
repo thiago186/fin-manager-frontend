@@ -1,5 +1,7 @@
+.claude/
 .cursor
 GEMINI.md
+AGENTS.md
 # Nuxt dev/build outputs
 
 .output
