@@ -233,23 +233,19 @@ export const useTransactions = () => {
     }
 
     // Apply credit card filter
-    if (filters.value.credit_card_id) {
-      filtered = filtered.filter(transaction => 
-        transaction.credit_card_id === filters.value.credit_card_id
-      )
+    if (filters.value.credit_card_id !== null && filters.value.credit_card_id !== undefined) {
+      const filterCreditCardId = filters.value.credit_card_id
+      filtered = filtered.filter(transaction => {
+        const transactionCreditCardId = transaction.credit_card_id ?? transaction.credit_card?.id
+        const matches = transactionCreditCardId === filterCreditCardId
+        return matches
+      })
     }
 
     // Apply category filter
     if (filters.value.category_id) {
       filtered = filtered.filter(transaction => 
         transaction.category_id === filters.value.category_id
-      )
-    }
-
-    // Apply credit card filter
-    if (filters.value.credit_card_id) {
-      filtered = filtered.filter(transaction => 
-        transaction.credit_card_id === filters.value.credit_card_id
       )
     }
 

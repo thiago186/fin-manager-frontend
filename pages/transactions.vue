@@ -113,7 +113,7 @@
           <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
             Filtros
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
             <!-- Search -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -140,6 +140,26 @@
                 <option value="INCOME">Receita</option>
                 <option value="EXPENSE">Despesa</option>
                 <option value="TRANSFER">Transferência</option>
+              </select>
+            </div>
+
+            <!-- Credit Card -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Cartão de Crédito
+              </label>
+              <select
+                v-model="localFilters.credit_card_id"
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              >
+                <option :value="null">Todos</option>
+                <option
+                  v-for="creditCard in creditCards"
+                  :key="creditCard.id"
+                  :value="creditCard.id"
+                >
+                  {{ creditCard.name }}
+                </option>
               </select>
             </div>
 
@@ -462,6 +482,8 @@ const {
   initialize
 } = useTransactions()
 
+const { creditCards, initialize: initializeCreditCards } = useCreditCards()
+
 // Local state
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -488,7 +510,26 @@ const handleSort = (key: string) => {
 }
 
 const applyFilters = () => {
-  applyTableFilters(localFilters.value)
+  let creditCardId: number | null = null
+  const creditCardIdValue = localFilters.value.credit_card_id
+  
+  if (creditCardIdValue !== null && creditCardIdValue !== undefined) {
+    const numValue = typeof creditCardIdValue === 'string' 
+      ? (creditCardIdValue === '' ? null : Number(creditCardIdValue))
+      : creditCardIdValue
+    
+    if (numValue !== null && !isNaN(numValue) && numValue > 0) {
+      creditCardId = numValue
+    }
+  }
+  
+  const filtersToApply: TransactionTableFilters = {
+    ...localFilters.value,
+    credit_card_id: creditCardId
+  }
+  
+  console.log('Applying filters:', filtersToApply)
+  applyTableFilters(filtersToApply)
 }
 
 const clearFilters = () => {
@@ -523,6 +564,9 @@ const handleTransactionSaved = () => {
 
 // Initialize data
 onMounted(async () => {
-  await initialize()
+  await Promise.all([
+    initialize(),
+    initializeCreditCards()
+  ])
 })
 </script> 
