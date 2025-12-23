@@ -10,27 +10,20 @@
           </p>
         </div>
         <div class="flex space-x-3">
-          <NuxtLink
-            to="/imports"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <ClockIcon class="h-4 w-4 mr-2" />
-            Histórico de Importações
-          </NuxtLink>
-          <button
-            @click="showImportModal = true"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
+          <Button as-child variant="outline">
+            <NuxtLink to="/imports" class="inline-flex items-center">
+              <ClockIcon class="h-4 w-4 mr-2" />
+              Histórico de Importações
+            </NuxtLink>
+          </Button>
+          <Button variant="outline" @click="showImportModal = true">
             <ArrowUpTrayIcon class="h-4 w-4 mr-2" />
             Importar CSV
-          </button>
-          <button
-            @click="showCreateModal = true"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
+          </Button>
+          <Button @click="showCreateModal = true">
             <PlusIcon class="h-4 w-4 mr-2" />
             Nova Transação
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -38,385 +31,266 @@
     <!-- Statistics Cards -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <!-- Total Transactions -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <DocumentTextIcon class="h-6 w-6 text-gray-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total de Transações
-                  </dt>
-                  <dd class="text-lg font-medium text-gray-900">
-                    {{ transactionStats.total_transactions }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Total de Transações</CardTitle>
+            <DocumentTextIcon class="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold text-gray-900">{{ transactionStats.total_transactions }}</div>
+          </CardContent>
+        </Card>
 
-        <!-- Total Income -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowUpIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total Receitas
-                  </dt>
-                  <dd class="text-lg font-medium text-green-600">
-                    {{ formatCurrency(transactionStats.total_income) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Total Receitas</CardTitle>
+            <ArrowUpIcon class="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold text-green-600">{{ formatCurrency(transactionStats.total_income) }}</div>
+          </CardContent>
+        </Card>
 
-        <!-- Total Expenses -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowDownIcon class="h-6 w-6 text-red-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total Despesas
-                  </dt>
-                  <dd class="text-lg font-medium text-red-600">
-                    {{ formatCurrency(transactionStats.total_expenses) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Total Despesas</CardTitle>
+            <ArrowDownIcon class="h-5 w-5 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold text-red-600">{{ formatCurrency(transactionStats.total_expenses) }}</div>
+          </CardContent>
+        </Card>
 
-        <!-- Total Transfers -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowsRightLeftIcon class="h-6 w-6 text-blue-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total Transferências
-                  </dt>
-                  <dd class="text-lg font-medium text-blue-600">
-                    {{ formatCurrency(transactionStats.total_transfers) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Total Transferências</CardTitle>
+            <ArrowsRightLeftIcon class="h-5 w-5 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold text-blue-600">{{ formatCurrency(transactionStats.total_transfers) }}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Filters -->
-      <div class="bg-white shadow rounded-lg mb-6">
-        <div class="px-4 py-5 sm:p-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Filtros
-          </h3>
+      <Card class="mb-6">
+        <CardHeader>
+          <CardTitle class="text-lg">Filtros</CardTitle>
+          <CardDescription>Refine os resultados de transações.</CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
-            <!-- Search -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Buscar
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label>Buscar</Label>
+              <Input
                 v-model="localFilters.search"
                 type="text"
                 placeholder="Descrição, categoria..."
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
 
-            <!-- Transaction Type -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Tipo
-              </label>
-              <select
-                v-model="localFilters.transaction_type"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="">Todos</option>
-                <option value="INCOME">Receita</option>
-                <option value="EXPENSE">Despesa</option>
-                <option value="TRANSFER">Transferência</option>
-              </select>
+            <div class="space-y-2">
+              <Label>Tipo</Label>
+              <Select v-model="localFilters.transaction_type">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todos</SelectItem>
+                  <SelectItem value="INCOME">Receita</SelectItem>
+                  <SelectItem value="EXPENSE">Despesa</SelectItem>
+                  <SelectItem value="TRANSFER">Transferência</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <!-- Credit Card -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Cartão de Crédito
-              </label>
-              <select
-                v-model="localFilters.credit_card_id"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option :value="null">Todos</option>
-                <option
-                  v-for="creditCard in creditCards"
-                  :key="creditCard.id"
-                  :value="creditCard.id"
-                >
-                  {{ creditCard.name }}
-                </option>
-              </select>
+            <div class="space-y-2">
+              <Label>Cartão de Crédito</Label>
+              <Select v-model="localFilters.credit_card_id">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todos</SelectItem>
+                  <SelectItem
+                    v-for="creditCard in creditCards"
+                    :key="creditCard.id"
+                    :value="creditCard.id"
+                  >
+                    {{ creditCard.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <!-- Date From -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Data Início
-              </label>
-              <input
-                v-model="localFilters.date_from"
-                type="date"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
+            <div class="space-y-2">
+              <Label>Data Início</Label>
+              <Input v-model="localFilters.date_from" type="date" />
             </div>
 
-            <!-- Date To -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Data Fim
-              </label>
-              <input
-                v-model="localFilters.date_to"
-                type="date"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
+            <div class="space-y-2">
+              <Label>Data Fim</Label>
+              <Input v-model="localFilters.date_to" type="date" />
             </div>
 
-            <!-- Amount Min -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Valor Mín
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label>Valor Mín</Label>
+              <Input
                 v-model="localFilters.amount_min"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
 
-            <!-- Amount Max -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Valor Máx
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label>Valor Máx</Label>
+              <Input
                 v-model="localFilters.amount_max"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
           </div>
 
-          <!-- Filter Actions -->
-          <div class="mt-4 flex justify-between">
-            <button
-              @click="applyFilters"
-              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <FunnelIcon class="h-4 w-4 mr-2" />
-              Aplicar Filtros
-            </button>
-            <button
-              @click="clearFilters"
-              class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
+          <div class="flex justify-between">
+            <Button variant="outline" @click="clearFilters">
               <XMarkIcon class="h-4 w-4 mr-2" />
               Limpar Filtros
-            </button>
+            </Button>
+            <Button @click="applyFilters">
+              <FunnelIcon class="h-4 w-4 mr-2" />
+              Aplicar Filtros
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <!-- Transactions Table -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-md">
-        <div class="px-4 py-5 sm:px-6">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">
-            Lista de Transações
-          </h3>
-          <p class="mt-1 max-w-2xl text-sm text-gray-500">
-            {{ filteredTransactions.length }} transações encontradas
-          </p>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Lista de Transações</CardTitle>
+          <CardDescription>{{ filteredTransactions.length }} transações encontradas</CardDescription>
+        </CardHeader>
 
         <!-- Loading State -->
-        <div v-if="loading" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <span class="ml-2">Loading transactions...</span>
-        </div>
+        <CardContent v-if="loading">
+          <div class="space-y-2">
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
+          </div>
+        </CardContent>
 
         <!-- Error State -->
-        <div v-else-if="error" class="px-4 py-5 sm:px-6">
-          <div class="bg-red-50 border border-red-200 rounded-md p-4">
-            <div class="flex">
-              <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">
-                  Erro ao carregar transações
-                </h3>
-                <div class="mt-2 text-sm text-red-700">
-                  {{ error }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CardContent v-else-if="error">
+          <Alert variant="destructive">
+            <AlertTitle>Erro ao carregar transações</AlertTitle>
+            <AlertDescription>{{ error }}</AlertDescription>
+          </Alert>
+        </CardContent>
 
         <!-- Table -->
-        <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  v-for="column in tableColumns"
-                  :key="column.key"
-                  :class="[
-                    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer',
-                    column.sortable ? 'hover:bg-gray-100' : '',
-                    column.align === 'right' ? 'text-right' : 'text-left'
-                  ]"
-                  @click="column.sortable ? handleSort(column.key) : null"
+        <CardContent v-else class="p-0">
+          <div class="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    v-for="column in tableColumns"
+                    :key="column.key"
+                    :class="[
+                      column.align === 'right' ? 'text-right' : '',
+                      column.align === 'center' ? 'text-center' : ''
+                    ]"
+                    @click="column.sortable ? handleSort(column.key) : null"
+                  >
+                    <div class="flex items-center space-x-1 cursor-pointer" v-if="column.sortable">
+                      <span>{{ column.label }}</span>
+                      <div class="flex flex-col">
+                        <ChevronUpIcon
+                          :class="[
+                            'h-3 w-3',
+                            sort.key === column.key && sort.direction === 'asc'
+                              ? 'text-indigo-600'
+                              : 'text-gray-400'
+                          ]"
+                        />
+                        <ChevronDownIcon
+                          :class="[
+                            'h-3 w-3 -mt-1',
+                            sort.key === column.key && sort.direction === 'desc'
+                              ? 'text-indigo-600'
+                              : 'text-gray-400'
+                          ]"
+                        />
+                      </div>
+                    </div>
+                    <span v-else>{{ column.label }}</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow
+                  v-for="transaction in filteredTransactions"
+                  :key="transaction.id"
+                  class="hover:bg-muted/40"
                 >
-                  <div class="flex items-center space-x-1">
-                    <span>{{ column.label }}</span>
-                    <div v-if="column.sortable" class="flex flex-col">
-                      <ChevronUpIcon
-                        :class="[
-                          'h-3 w-3',
-                          sort.key === column.key && sort.direction === 'asc'
-                            ? 'text-indigo-600'
-                            : 'text-gray-400'
-                        ]"
-                      />
-                      <ChevronDownIcon
-                        :class="[
-                          'h-3 w-3 -mt-1',
-                          sort.key === column.key && sort.direction === 'desc'
-                            ? 'text-indigo-600'
-                            : 'text-gray-400'
-                        ]"
-                      />
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    {{ formatDate(transaction.occurred_at) }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap">
+                    <Badge :variant="transaction.transaction_type === 'INCOME' ? 'secondary' : transaction.transaction_type === 'EXPENSE' ? 'destructive' : 'outline'">
+                      {{ getTransactionTypeLabel(transaction.transaction_type) }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell class="text-sm text-gray-900">
+                    <div class="max-w-xs truncate">
+                      {{ transaction.description || 'Sem descrição' }}
                     </div>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr
-                v-for="transaction in filteredTransactions"
-                :key="transaction.id"
-                class="hover:bg-gray-50"
-              >
-                <!-- Date -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatDate(transaction.occurred_at) }}
-                </td>
-
-                <!-- Type -->
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    :class="[
-                      'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                      getTransactionTypeColor(transaction.transaction_type)
-                    ]"
-                  >
-                    {{ getTransactionTypeLabel(transaction.transaction_type) }}
-                  </span>
-                </td>
-
-                <!-- Description -->
-                <td class="px-6 py-4 text-sm text-gray-900">
-                  <div class="max-w-xs truncate">
-                    {{ transaction.description || 'Sem descrição' }}
-                  </div>
-                </td>
-
-                <!-- Category -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ transaction.category?.name || '-' }}
-                </td>
-
-                <!-- Subcategory -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ transaction.subcategory?.name || '-' }}
-                </td>
-
-                <!-- Account/Credit Card -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 mr-2">
-                      <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
-                      <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    {{ transaction.category?.name || '-' }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    {{ transaction.subcategory?.name || '-' }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 mr-2">
+                        <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
+                        <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
+                      </div>
+                      <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
                     </div>
-                    <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
-                  </div>
-                </td>
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm font-medium text-right">
+                    <span :class="[getTransactionTypeColor(transaction.transaction_type)]">
+                      {{ formatCurrency(transaction.amount) }}
+                    </span>
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900 text-center">
+                    <span v-if="transaction.installments_total > 1">
+                      {{ transaction.installment_number }}/{{ transaction.installments_total }}
+                    </span>
+                    <span v-else>-</span>
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="icon" @click="editTransaction(transaction)">
+                        <PencilIcon class="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" @click="deleteTransaction(transaction.id)">
+                        <TrashIcon class="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
 
-                <!-- Amount -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                  <span
-                    :class="[
-                      getTransactionTypeColor(transaction.transaction_type)
-                    ]"
-                  >
-                    {{ formatCurrency(transaction.amount) }}
-                  </span>
-                </td>
-
-                <!-- Installments -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
-                  <span v-if="transaction.installments_total > 1">
-                    {{ transaction.installment_number }}/{{ transaction.installments_total }}
-                  </span>
-                  <span v-else>-</span>
-                </td>
-
-                <!-- Actions -->
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex items-center justify-end space-x-2">
-                    <button
-                      @click="editTransaction(transaction)"
-                      class="text-indigo-600 hover:text-indigo-900"
-                    >
-                      <PencilIcon class="h-4 w-4" />
-                    </button>
-                    <button
-                      @click="deleteTransaction(transaction.id)"
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon class="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Empty State -->
           <div
             v-if="filteredTransactions.length === 0 && !loading"
             class="text-center py-12"
@@ -429,17 +303,14 @@
               Comece criando sua primeira transação.
             </p>
             <div class="mt-6">
-              <button
-                @click="showCreateModal = true"
-                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
+              <Button @click="showCreateModal = true">
                 <PlusIcon class="h-4 w-4 mr-2" />
                 Nova Transação
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -479,6 +350,34 @@ import {
   ArrowUpTrayIcon,
   ClockIcon
 } from '@heroicons/vue/24/outline'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import type { Transaction, TransactionTableFilters, TransactionTableSort } from '~/types/transactions'
 

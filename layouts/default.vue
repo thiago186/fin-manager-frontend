@@ -57,12 +57,9 @@
             <div class="ml-3 relative">
               <div class="flex items-center space-x-4">
                 <span class="text-sm text-gray-700">{{ user?.username }}</span>
-                <button
-                  @click="logout"
-                  class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
-                >
+                <Button size="sm" variant="destructive" @click="logout">
                   Logout
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -78,5 +75,7 @@
 </template>
 
 <script setup lang="ts">
+import { Button } from '@/components/ui/button'
+
 const { isAuthenticated, user, logout } = useAuth()
 </script> 

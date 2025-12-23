@@ -1,242 +1,197 @@
 <template>
-  <div class="fixed inset-0 z-50 overflow-y-auto">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$emit('close')"></div>
+  <Dialog :open="true">
+    <DialogContent class="sm:max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>{{ isEdit ? 'Editar Transação' : 'Nova Transação' }}</DialogTitle>
+        <DialogDescription>
+          Preencha os detalhes da transação.
+        </DialogDescription>
+      </DialogHeader>
 
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-                {{ isEdit ? 'Editar Transação' : 'Nova Transação' }}
-              </h3>
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Transaction Type -->
+          <div class="space-y-2">
+            <Label>Tipo de Transação *</Label>
+            <Select v-model="form.transaction_type" required>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="INCOME">Receita</SelectItem>
+                <SelectItem value="EXPENSE">Despesa</SelectItem>
+                <SelectItem value="TRANSFER">Transferência</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-              <!-- Form -->
-              <form @submit.prevent="handleSubmit" class="space-y-4">
-                <!-- Transaction Type -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo de Transação *
-                  </label>
-                  <select
-                    v-model="form.transaction_type"
-                    required
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Selecione o tipo</option>
-                    <option value="INCOME">Receita</option>
-                    <option value="EXPENSE">Despesa</option>
-                    <option value="TRANSFER">Transferência</option>
-                  </select>
-                </div>
-
-                <!-- Amount -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Valor *
-                  </label>
-                  <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span class="text-gray-500 sm:text-sm">R$</span>
-                    </div>
-                    <input
-                      v-model="form.amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      placeholder="0,00"
-                      class="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <!-- Description -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Descrição
-                  </label>
-                  <input
-                    v-model="form.description"
-                    type="text"
-                    placeholder="Descrição da transação"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <!-- Occurred At -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Data da Transação *
-                  </label>
-                  <input
-                    v-model="form.occurred_at"
-                    type="date"
-                    required
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <!-- Account -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Conta
-                  </label>
-                  <select
-                    v-model="form.account_id"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Selecione uma conta</option>
-                    <option v-for="account in accounts.filter(a => a.is_active)" :key="account.id" :value="account.id">
-                      {{ account.name }} - {{ formatCurrency(account.current_balance) }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Credit Card -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Cartão de Crédito
-                  </label>
-                  <select
-                    v-model="form.credit_card_id"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                    <option value="">Selecione um cartão</option>
-                    <option v-for="card in creditCards.filter(c => c.is_active)" :key="card.id" :value="card.id">
-                      {{ card.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Category -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Categoria
-                  </label>
-                  <select
-                    v-model="form.category_id"
-                    @change="loadSubcategories"
-                    :disabled="isEdit"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    <option 
-                      v-for="category in availableCategories" 
-                      :key="category.id" 
-                      :value="category.id"
-                    >
-                      {{ category.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Subcategory -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Subcategoria
-                  </label>
-                  <select
-                    v-model="form.subcategory_id"
-                    @change="handleSubcategoryChange"
-                    :disabled="isEdit ? false : !form.category_id"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Selecione uma subcategoria</option>
-                    <option 
-                      v-for="subcategory in availableSubcategories" 
-                      :key="subcategory.id" 
-                      :value="subcategory.id"
-                    >
-                      {{ subcategory.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Installments -->
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                      Total de Parcelas
-                    </label>
-                    <input
-                      v-model="form.installments_total"
-                      type="number"
-                      min="1"
-                      placeholder="1"
-                      class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                      Parcela Atual
-                    </label>
-                    <input
-                      v-model="form.installment_number"
-                      type="number"
-                      min="1"
-                      placeholder="1"
-                      class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <!-- Charge at Card Date -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Data de Cobrança no Cartão
-                  </label>
-                  <input
-                    v-model="form.charge_at_card"
-                    type="date"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <!-- Error Display -->
-                <div v-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
-                  <div class="flex">
-                    <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
-                    <div class="ml-3">
-                      <h3 class="text-sm font-medium text-red-800">
-                        Erro ao salvar transação
-                      </h3>
-                      <div class="mt-2 text-sm text-red-700">
-                        {{ error }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
+          <!-- Amount -->
+          <div class="space-y-2">
+            <Label>Valor *</Label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">R$</span>
+              <Input
+                v-model="form.amount"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                placeholder="0,00"
+                class="pl-10"
+              />
             </div>
           </div>
         </div>
 
-        <!-- Modal Actions -->
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            type="button"
-            @click="handleSubmit"
-            :disabled="isSubmitting"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div v-if="isSubmitting" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            {{ isSubmitting ? 'Salvando...' : (isEdit ? 'Atualizar' : 'Criar') }}
-          </button>
-          <button
-            type="button"
-            @click="$emit('close')"
-            :disabled="isSubmitting"
-            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancelar
-          </button>
+        <!-- Description -->
+        <div class="space-y-2">
+          <Label>Descrição</Label>
+          <Input
+            v-model="form.description"
+            type="text"
+            placeholder="Descrição da transação"
+          />
         </div>
-      </div>
-    </div>
-  </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <Label>Data da Transação *</Label>
+            <Input v-model="form.occurred_at" type="date" required />
+          </div>
+          <div class="space-y-2">
+            <Label>Data de Cobrança no Cartão</Label>
+            <Input v-model="form.charge_at_card" type="date" />
+          </div>
+        </div>
+
+        <!-- Account & Credit Card -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <Label>Conta</Label>
+            <Select v-model="form.account_id">
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma conta" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Nenhuma</SelectItem>
+                <SelectItem
+                  v-for="account in accounts.filter(a => a.is_active)"
+                  :key="account.id"
+                  :value="String(account.id)"
+                >
+                  {{ account.name }} - {{ formatCurrency(account.current_balance) }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="space-y-2">
+            <Label>Cartão de Crédito</Label>
+            <Select v-model="form.credit_card_id">
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cartão" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Nenhum</SelectItem>
+                <SelectItem
+                  v-for="card in creditCards.filter(c => c.is_active)"
+                  :key="card.id"
+                  :value="String(card.id)"
+                >
+                  {{ card.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <Label>Categoria</Label>
+            <Select v-model="form.category_id" :disabled="isEdit" @update:model-value="loadSubcategories">
+              <SelectTrigger :class="isEdit ? 'cursor-not-allowed opacity-60' : ''">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Selecione</SelectItem>
+                <SelectItem
+                  v-for="category in availableCategories"
+                  :key="category.id"
+                  :value="String(category.id)"
+                >
+                  {{ category.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <!-- Subcategory -->
+          <div class="space-y-2">
+            <Label>Subcategoria</Label>
+            <Select
+              v-model="form.subcategory_id"
+              :disabled="isEdit ? false : !form.category_id"
+              @update:model-value="handleSubcategoryChange"
+            >
+              <SelectTrigger :class="(!form.category_id && !isEdit) ? 'cursor-not-allowed opacity-60' : ''">
+                <SelectValue placeholder="Selecione uma subcategoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Selecione</SelectItem>
+                <SelectItem
+                  v-for="subcategory in availableSubcategories"
+                  :key="subcategory.id"
+                  :value="String(subcategory.id)"
+                >
+                  {{ subcategory.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <!-- Installments -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <Label>Total de Parcelas</Label>
+            <Input
+              v-model="form.installments_total"
+              type="number"
+              min="1"
+              placeholder="1"
+            />
+          </div>
+          <div class="space-y-2">
+            <Label>Parcela Atual</Label>
+            <Input
+              v-model="form.installment_number"
+              type="number"
+              min="1"
+              placeholder="1"
+            />
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        <Alert v-if="error" variant="destructive">
+          <ExclamationTriangleIcon class="h-4 w-4" />
+          <AlertTitle>Erro ao salvar transação</AlertTitle>
+          <AlertDescription>{{ error }}</AlertDescription>
+        </Alert>
+
+        <DialogFooter class="gap-2">
+          <Button type="button" variant="outline" :disabled="isSubmitting" @click="$emit('close')">
+            Cancelar
+          </Button>
+          <Button type="submit" :disabled="isSubmitting">
+            <span v-if="isSubmitting" class="mr-2 inline-flex h-4 w-4 animate-spin rounded-full border-b-2 border-white"></span>
+            {{ isSubmitting ? 'Salvando...' : (isEdit ? 'Atualizar' : 'Criar') }}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -244,6 +199,25 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { Transaction, TransactionForm } from '~/types/transactions'
 import type { CategoryList } from '~/types/categories'
 import type { SubcategoryList } from '~/types/subcategories'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 // Props
 interface Props {

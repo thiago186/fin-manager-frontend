@@ -1,246 +1,189 @@
 <template>
-  <div class="fixed inset-0 z-50 overflow-y-auto">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="handleClose"></div>
+  <Dialog :open="true">
+    <DialogContent class="sm:max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Importar Transações CSV</DialogTitle>
+        <DialogDescription>
+          Envie seu arquivo CSV e associe a uma conta ou cartão.
+        </DialogDescription>
+      </DialogHeader>
 
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-                Importar Transações CSV
-              </h3>
-
-              <!-- File Upload Area -->
-              <div v-if="!selectedFile && !currentReport" class="mb-6">
-                <div
-                  @drop.prevent="handleDrop"
-                  @dragover.prevent="isDragging = true"
-                  @dragleave.prevent="isDragging = false"
-                  :class="[
-                    'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
-                    isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'
-                  ]"
-                >
-                  <CloudArrowUpIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p class="text-sm text-gray-600 mb-2">
-                    Arraste e solte um arquivo CSV aqui, ou
-                  </p>
-                  <label class="cursor-pointer">
-                    <span class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                      Selecionar arquivo
-                    </span>
-                    <input
-                      ref="fileInput"
-                      type="file"
-                      accept=".csv"
-                      class="hidden"
-                      @change="handleFileSelect"
-                    />
-                  </label>
-                  <p class="text-xs text-gray-500 mt-2">
-                    Apenas arquivos .csv são aceitos
-                  </p>
-                </div>
-              </div>
-
-              <!-- Selected File Preview -->
-              <div v-if="selectedFile && !isUploading && !currentReport" class="mb-6">
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                      <DocumentIcon class="h-8 w-8 text-gray-400 mr-3" />
-                      <div>
-                        <p class="text-sm font-medium text-gray-900">{{ selectedFile.name }}</p>
-                        <p class="text-xs text-gray-500">
-                          {{ formatFileSize(selectedFile.size) }}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      @click="clearFile"
-                      class="text-gray-400 hover:text-gray-600"
-                      :disabled="isUploading"
-                    >
-                      <XMarkIcon class="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Account/Credit Card Selection -->
-              <div v-if="selectedFile && !isUploading && !currentReport" class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Associar a conta ou cartão de crédito <span class="text-red-500">*</span>
-                </label>
-                <div v-if="accounts.length === 0 && creditCards.length === 0" class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                  <p class="text-sm text-yellow-800">
-                    Você precisa criar pelo menos uma conta bancária ou cartão de crédito antes de importar transações.
-                  </p>
-                </div>
-                <select
-                  v-else
-                  v-model="selectedAccountOrCard"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  :class="{
-                    'border-red-300': !selectedAccountOrCard && showValidationError
-                  }"
-                >
-                  <option value="">Selecione uma conta ou cartão de crédito</option>
-                  <optgroup v-if="accounts.length > 0" label="Contas Bancárias">
-                    <option
-                      v-for="account in accounts"
-                      :key="`account-${account.id}`"
-                      :value="`account-${account.id}`"
-                    >
-                      {{ account.name }}
-                    </option>
-                  </optgroup>
-                  <optgroup v-if="creditCards.length > 0" label="Cartões de Crédito">
-                    <option
-                      v-for="creditCard in creditCards"
-                      :key="`credit-card-${creditCard.id}`"
-                      :value="`credit-card-${creditCard.id}`"
-                    >
-                      {{ creditCard.name }}
-                    </option>
-                  </optgroup>
-                </select>
-                <p
-                  v-if="!selectedAccountOrCard && showValidationError"
-                  class="mt-1 text-sm text-red-600"
-                >
-                  É necessário selecionar uma conta ou cartão de crédito
-                </p>
-              </div>
-
-              <!-- Upload Status Display -->
-              <div v-if="isUploading || currentReport" class="mb-6">
-                <!-- SENT Status -->
-                <div v-if="currentReport?.status === 'SENT'" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div class="flex items-center">
-                    <ClockIcon class="h-5 w-5 text-blue-400 mr-3" />
-                    <div>
-                      <p class="text-sm font-medium text-blue-800">
-                        Arquivo enviado. Processamento iniciará em breve...
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- PROCESSING Status -->
-                <div v-if="currentReport?.status === 'PROCESSING'" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div class="flex items-center">
-                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600 mr-3"></div>
-                    <div>
-                      <p class="text-sm font-medium text-yellow-800">
-                        Importando transações... Aguarde.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- IMPORTED Status -->
-                <div v-if="currentReport?.status === 'IMPORTED'" class="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div class="flex items-start">
-                    <CheckCircleIcon class="h-5 w-5 text-green-400 mr-3 mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-sm font-medium text-green-800 mb-2">
-                        Importação concluída com sucesso!
-                      </p>
-                      <div class="text-sm text-green-700 space-y-1">
-                        <p>✓ {{ currentReport.success_count }} transações importadas</p>
-                        <p v-if="currentReport.error_count > 0" class="text-yellow-700">
-                          ⚠ {{ currentReport.error_count }} transações falharam
-                        </p>
-                      </div>
-                      <div v-if="currentReport.errors && currentReport.errors.length > 0" class="mt-3">
-                        <button
-                          @click="showErrors = !showErrors"
-                          class="text-sm text-green-700 hover:text-green-800 underline"
-                        >
-                          {{ showErrors ? 'Ocultar' : 'Mostrar' }} erros ({{ currentReport.errors.length }})
-                        </button>
-                        <div v-if="showErrors" class="mt-2 bg-white rounded border border-green-200 p-3 max-h-48 overflow-y-auto">
-                          <ul class="text-xs text-gray-700 space-y-1">
-                            <li v-for="(error, index) in currentReport.errors" :key="index" class="flex items-start">
-                              <ExclamationCircleIcon class="h-4 w-4 text-red-400 mr-1 mt-0.5 flex-shrink-0" />
-                              <span>{{ error }}</span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- FAILED Status -->
-                <div v-if="currentReport?.status === 'FAILED'" class="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div class="flex items-start">
-                    <XCircleIcon class="h-5 w-5 text-red-400 mr-3 mt-0.5" />
-                    <div class="flex-1">
-                      <p class="text-sm font-medium text-red-800 mb-2">
-                        Importação falhou
-                      </p>
-                      <p v-if="currentReport.failed_reason" class="text-sm text-red-700">
-                        {{ currentReport.failed_reason }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Upload Progress -->
-              <div v-if="isUploading" class="mb-6">
-                <div class="flex items-center justify-center py-4">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                  <span class="ml-3 text-sm text-gray-600">Enviando arquivo...</span>
-                </div>
-              </div>
-
-              <!-- Error Display -->
-              <div v-if="uploadError" class="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                <div class="flex">
-                  <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
-                  <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">
-                      Erro ao fazer upload
-                    </h3>
-                    <div class="mt-2 text-sm text-red-700">
-                      {{ uploadError }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Modal Actions -->
-        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button
-            v-if="selectedFile && !isUploading && !currentReport"
-            type="button"
-            @click="handleUpload"
-            :disabled="!selectedAccountOrCard"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Importar
-          </button>
-          <button
-            type="button"
-            @click="handleClose"
-            :disabled="!!(isUploading || (currentReport && currentReport.status !== 'IMPORTED' && currentReport.status !== 'FAILED'))"
-            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ currentReport?.status === 'IMPORTED' || currentReport?.status === 'FAILED' ? 'Fechar' : 'Cancelar' }}
-          </button>
+      <!-- File Upload Area -->
+      <div v-if="!selectedFile && !currentReport" class="mb-6">
+        <div
+          @drop.prevent="handleDrop"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          :class="[
+            'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+            isDragging ? 'border-primary/70 bg-primary/5' : 'border-border hover:border-primary/40'
+          ]"
+        >
+          <CloudArrowUpIcon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <p class="text-sm text-muted-foreground mb-2">
+            Arraste e solte um arquivo CSV aqui, ou
+          </p>
+          <Button variant="default" type="button" @click="fileInput?.click()">
+            Selecionar arquivo
+          </Button>
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".csv"
+            class="hidden"
+            @change="handleFileSelect"
+          />
+          <p class="text-xs text-muted-foreground mt-2">
+            Apenas arquivos .csv são aceitos
+          </p>
         </div>
       </div>
-    </div>
-  </div>
+
+      <!-- Selected File Preview -->
+      <div v-if="selectedFile && !isUploading && !currentReport" class="mb-6">
+        <div class="rounded-lg border border-border bg-muted/30 p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <DocumentIcon class="h-8 w-8 text-muted-foreground mr-3" />
+              <div>
+                <p class="text-sm font-medium">{{ selectedFile.name }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ formatFileSize(selectedFile.size) }}
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" @click="clearFile" :disabled="isUploading">
+              <XMarkIcon class="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account/Credit Card Selection -->
+      <div v-if="selectedFile && !isUploading && !currentReport" class="mb-6 space-y-2">
+        <div class="flex items-center gap-1">
+          <Label>Associar a conta ou cartão de crédito</Label>
+          <span class="text-red-500">*</span>
+        </div>
+        <div
+          v-if="accounts.length === 0 && creditCards.length === 0"
+          class="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800"
+        >
+          Você precisa criar pelo menos uma conta bancária ou cartão de crédito antes de importar transações.
+        </div>
+        <Select v-else v-model="selectedAccountOrCard">
+          <SelectTrigger :class="!selectedAccountOrCard && showValidationError ? 'border-destructive' : ''">
+            <SelectValue placeholder="Selecione uma conta ou cartão de crédito" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectLabel>Contas Bancárias</SelectLabel>
+            <SelectItem
+              v-for="account in accounts"
+              :key="`account-${account.id}`"
+              :value="`account-${account.id}`"
+            >
+              {{ account.name }}
+            </SelectItem>
+            <SelectSeparator v-if="accounts.length && creditCards.length" />
+            <SelectLabel v-if="creditCards.length">Cartões de Crédito</SelectLabel>
+            <SelectItem
+              v-for="creditCard in creditCards"
+              :key="`credit-card-${creditCard.id}`"
+              :value="`credit-card-${creditCard.id}`"
+            >
+              {{ creditCard.name }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <p v-if="!selectedAccountOrCard && showValidationError" class="text-sm text-destructive">
+          É necessário selecionar uma conta ou cartão de crédito
+        </p>
+      </div>
+
+      <!-- Upload Status Display -->
+      <div v-if="isUploading || currentReport" class="mb-6 space-y-3">
+        <Alert v-if="currentReport?.status === 'SENT'" variant="default">
+          <ClockIcon class="h-4 w-4" />
+          <AlertTitle>Arquivo enviado</AlertTitle>
+          <AlertDescription>Processamento iniciará em breve...</AlertDescription>
+        </Alert>
+
+        <Alert v-if="currentReport?.status === 'PROCESSING'" variant="default">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-4 w-4 animate-spin rounded-full border-b-2 border-primary"></span>
+            <AlertTitle>Importando transações...</AlertTitle>
+          </div>
+          <AlertDescription>Aguarde enquanto processamos seu arquivo.</AlertDescription>
+        </Alert>
+
+        <Alert v-if="currentReport?.status === 'IMPORTED'" variant="success">
+          <CheckCircleIcon class="h-4 w-4" />
+          <AlertTitle>Importação concluída com sucesso!</AlertTitle>
+          <AlertDescription class="space-y-2">
+            <p>✓ {{ currentReport.success_count }} transações importadas</p>
+            <p v-if="currentReport.error_count > 0" class="text-yellow-700">
+              ⚠ {{ currentReport.error_count }} transações falharam
+            </p>
+            <div v-if="currentReport.errors && currentReport.errors.length > 0" class="space-y-2">
+              <Button variant="link" class="px-0" @click="showErrors = !showErrors">
+                {{ showErrors ? 'Ocultar' : 'Mostrar' }} erros ({{ currentReport.errors.length }})
+              </Button>
+              <div v-if="showErrors" class="rounded border border-border bg-background p-3 max-h-48 overflow-y-auto">
+                <ul class="text-xs text-muted-foreground space-y-1">
+                  <li v-for="(error, index) in currentReport.errors" :key="index" class="flex items-start gap-1">
+                    <ExclamationCircleIcon class="h-4 w-4 text-destructive mt-0.5" />
+                    <span>{{ error }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        <Alert v-if="currentReport?.status === 'FAILED'" variant="destructive">
+          <XCircleIcon class="h-4 w-4" />
+          <AlertTitle>Importação falhou</AlertTitle>
+          <AlertDescription>
+            {{ currentReport.failed_reason || 'Ocorreu um erro ao processar o arquivo.' }}
+          </AlertDescription>
+        </Alert>
+      </div>
+
+      <!-- Upload Progress -->
+      <div v-if="isUploading" class="mb-6">
+        <div class="flex items-center justify-center py-4">
+          <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+          <span class="ml-3 text-sm text-muted-foreground">Enviando arquivo...</span>
+        </div>
+      </div>
+
+      <!-- Error Display -->
+      <Alert v-if="uploadError" variant="destructive" class="mb-6">
+        <ExclamationTriangleIcon class="h-4 w-4" />
+        <AlertTitle>Erro ao fazer upload</AlertTitle>
+        <AlertDescription>{{ uploadError }}</AlertDescription>
+      </Alert>
+
+      <DialogFooter class="gap-2">
+        <Button
+          v-if="selectedFile && !isUploading && !currentReport"
+          type="button"
+          :disabled="!selectedAccountOrCard"
+          @click="handleUpload"
+        >
+          Importar
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          :disabled="!!(isUploading || (currentReport && currentReport.status !== 'IMPORTED' && currentReport.status !== 'FAILED'))"
+          @click="handleClose"
+        >
+          {{ currentReport?.status === 'IMPORTED' || currentReport?.status === 'FAILED' ? 'Fechar' : 'Cancelar' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -255,6 +198,26 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/24/outline'
 import type { ImportReport } from '~/types/importReports'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 // Emits
 const emit = defineEmits<{

@@ -10,13 +10,10 @@
               Gerencie suas contas bancárias e acompanhe seus saldos
             </p>
           </div>
-          <button
-            @click="showCreateModal = true"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <PlusIcon class="h-4 w-4 mr-2" />
-            Nova Conta
-          </button>
+        <Button @click="showCreateModal = true">
+          <PlusIcon class="h-4 w-4 mr-2" />
+          Nova Conta
+        </Button>
         </div>
       </div>
     </div>
@@ -24,310 +21,247 @@
     <!-- Stats -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-4">
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <BanknotesIcon class="h-6 w-6 text-gray-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total de Contas
-                  </dt>
-                  <dd class="text-lg font-medium text-gray-900">
-                    {{ accountStats.total }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Total de Contas</CardTitle>
+            <BanknotesIcon class="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold">{{ accountStats.total }}</div>
+          </CardContent>
+        </Card>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CheckCircleIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Contas Ativas
-                  </dt>
-                  <dd class="text-lg font-medium text-gray-900">
-                    {{ accountStats.active }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Contas Ativas</CardTitle>
+            <CheckCircleIcon class="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold">{{ accountStats.active }}</div>
+          </CardContent>
+        </Card>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <XCircleIcon class="h-6 w-6 text-red-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Contas Inativas
-                  </dt>
-                  <dd class="text-lg font-medium text-gray-900">
-                    {{ accountStats.inactive }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Contas Inativas</CardTitle>
+            <XCircleIcon class="h-5 w-5 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold">{{ accountStats.inactive }}</div>
+          </CardContent>
+        </Card>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CurrencyDollarIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Saldo Total
-                  </dt>
-                  <dd class="text-lg font-medium text-gray-900">
-                    {{ formatCurrency(accountStats.totalBalance) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium">Saldo Total</CardTitle>
+            <CurrencyDollarIcon class="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div class="text-lg font-semibold">{{ formatCurrency(accountStats.totalBalance) }}</div>
+          </CardContent>
+        </Card>
       </div>
     </div>
 
     <!-- Filters -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="bg-white shadow rounded-lg mb-6">
-        <div class="px-4 py-5 sm:p-6">
+      <Card class="mb-6">
+        <CardHeader>
+          <CardTitle class="text-lg">Filtros</CardTitle>
+          <CardDescription>Refine a lista de contas.</CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-4">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
-            <!-- Search -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Buscar
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label>Buscar</Label>
+              <Input
                 v-model="localFilters.search"
                 type="text"
                 placeholder="Nome da conta..."
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
 
-            <!-- Account Type -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Conta
-              </label>
-              <select
-                v-model="localFilters.account_type"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="">Todos os tipos</option>
-                <option value="checking">Conta Corrente</option>
-              </select>
+            <div class="space-y-2">
+              <Label>Tipo de Conta</Label>
+              <Select v-model="localFilters.account_type">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os tipos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todos os tipos</SelectItem>
+                  <SelectItem value="checking">Conta Corrente</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <!-- Currency -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Moeda
-              </label>
-              <select
-                v-model="localFilters.currency"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="">Todas as moedas</option>
-                <option value="BRL">Real Brasileiro</option>
-              </select>
+            <div class="space-y-2">
+              <Label>Moeda</Label>
+              <Select v-model="localFilters.currency">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as moedas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todas as moedas</SelectItem>
+                  <SelectItem value="BRL">Real Brasileiro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <!-- Active Status -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                v-model="localFilters.is_active"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              >
-                <option value="">Todos</option>
-                <option :value="true">Ativas</option>
-                <option :value="false">Inativas</option>
-              </select>
+            <div class="space-y-2">
+              <Label>Status</Label>
+              <Select v-model="localFilters.is_active">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todos</SelectItem>
+                  <SelectItem :value="true">Ativas</SelectItem>
+                  <SelectItem :value="false">Inativas</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div class="flex justify-end gap-3 mt-4">
-            <button
-              @click="clearFilters"
-              class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="clearFilters">
               <XMarkIcon class="h-4 w-4 mr-1" />
               Limpar
-            </button>
-            <button
-              @click="applyFilters"
-              class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
+            </Button>
+            <Button @click="applyFilters">
               <FunnelIcon class="h-4 w-4 mr-1" />
               Filtrar
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Table -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="bg-white shadow overflow-hidden sm:rounded-md">
-        <div v-if="loading" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Contas</CardTitle>
+          <CardDescription>{{ filteredAccounts.length }} contas encontradas</CardDescription>
+        </CardHeader>
 
-        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4 m-4">
-          <div class="flex">
-            <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                Erro ao carregar contas
-              </h3>
-              <div class="mt-2 text-sm text-red-700">
-                {{ error }}
-              </div>
-            </div>
+        <CardContent v-if="loading">
+          <div class="space-y-2">
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
+            <Skeleton class="h-8 w-full" />
           </div>
-        </div>
+        </CardContent>
 
-        <div v-else-if="filteredAccounts.length > 0" class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  v-for="column in tableColumns"
-                  :key="column.key"
-                  :class="[
-                    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
-                    column.align === 'right' ? 'text-right' : '',
-                    column.align === 'center' ? 'text-center' : ''
-                  ]"
-                >
-                  <button
-                    v-if="column.sortable"
-                    @click="handleSort(column.key)"
-                    class="group inline-flex items-center hover:text-gray-700"
-                  >
-                    {{ column.label }}
-                    <span class="ml-2 flex-none rounded">
-                      <ChevronUpIcon
-                        v-if="sort.key === column.key && sort.direction === 'asc'"
-                        class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                      />
-                      <ChevronDownIcon
-                        v-else-if="sort.key === column.key && sort.direction === 'desc'"
-                        class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                      />
-                      <ChevronUpIcon
-                        v-else
-                        class="h-4 w-4 text-gray-300 group-hover:text-gray-400"
-                      />
-                    </span>
-                  </button>
-                  <span v-else>{{ column.label }}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="account in filteredAccounts" :key="account.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <BanknotesIcon class="h-6 w-6 text-indigo-600" />
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">
-                        {{ account.name }}
-                      </div>
-                      <div class="text-sm text-gray-500">
-                        {{ getAccountTypeLabel(account.account_type) }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatCurrency(account.current_balance) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ getCurrencyLabel(account.currency) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
+        <CardContent v-else-if="error">
+          <Alert variant="destructive">
+            <AlertTitle>Erro ao carregar contas</AlertTitle>
+            <AlertDescription>{{ error }}</AlertDescription>
+          </Alert>
+        </CardContent>
+
+        <CardContent v-else class="p-0">
+          <div class="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    v-for="column in tableColumns"
+                    :key="column.key"
                     :class="[
-                      'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                      account.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                      column.align === 'right' ? 'text-right' : '',
+                      column.align === 'center' ? 'text-center' : ''
                     ]"
                   >
-                    {{ account.is_active ? 'Ativa' : 'Inativa' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ formatDate(account.created_at) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex justify-end space-x-2">
                     <button
-                      @click="editAccount(account)"
-                      class="text-indigo-600 hover:text-indigo-900"
+                      v-if="column.sortable"
+                      @click="handleSort(column.key)"
+                      class="group inline-flex items-center hover:text-gray-700"
                     >
-                      <PencilIcon class="h-4 w-4" />
+                      {{ column.label }}
+                      <span class="ml-2 flex-none rounded">
+                        <ChevronUpIcon
+                          v-if="sort.key === column.key && sort.direction === 'asc'"
+                          class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                        />
+                        <ChevronDownIcon
+                          v-else-if="sort.key === column.key && sort.direction === 'desc'"
+                          class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                        />
+                        <ChevronUpIcon
+                          v-else
+                          class="h-4 w-4 text-gray-300 group-hover:text-gray-400"
+                        />
+                      </span>
                     </button>
-                    <button
-                      @click="deleteAccount(account.id)"
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon class="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="text-center py-12">
-          <BanknotesIcon class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">
-            Nenhuma conta encontrada
-          </h3>
-          <p class="mt-1 text-sm text-gray-500">
-            Comece criando sua primeira conta.
-          </p>
-          <div class="mt-6">
-            <button
-              @click="showCreateModal = true"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <PlusIcon class="h-4 w-4 mr-2" />
-              Nova Conta
-            </button>
+                    <span v-else>{{ column.label }}</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="account in filteredAccounts" :key="account.id" class="hover:bg-muted/40">
+                  <TableCell class="whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <BanknotesIcon class="h-6 w-6 text-indigo-600" />
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">
+                          {{ account.name }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          {{ getAccountTypeLabel(account.account_type) }}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    {{ formatCurrency(account.current_balance) }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                    {{ getCurrencyLabel(account.currency) }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap">
+                    <Badge :variant="account.is_active ? 'secondary' : 'destructive'">
+                      {{ account.is_active ? 'Ativa' : 'Inativa' }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-sm text-gray-500">
+                    {{ formatDate(account.created_at) }}
+                  </TableCell>
+                  <TableCell class="whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                      <Button variant="ghost" size="icon" @click="editAccount(account)">
+                        <PencilIcon class="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" @click="deleteAccount(account.id)">
+                        <TrashIcon class="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </div>
+
+          <div v-if="filteredAccounts.length === 0" class="text-center py-12">
+            <BanknotesIcon class="mx-auto h-12 w-12 text-gray-400" />
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              Nenhuma conta encontrada
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Comece criando sua primeira conta.
+            </p>
+            <div class="mt-6">
+              <Button @click="showCreateModal = true">
+                <PlusIcon class="h-4 w-4 mr-2" />
+                Nova Conta
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -356,6 +290,34 @@ import {
   PencilIcon,
   TrashIcon
 } from '@heroicons/vue/24/outline'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Skeleton } from '@/components/ui/skeleton'
 
 import type { Account, AccountTableFilters, AccountTableSort } from '~/types/accounts'
 
