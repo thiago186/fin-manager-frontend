@@ -70,6 +70,52 @@
                 </div>
               </div>
 
+              <!-- Account/Credit Card Selection -->
+              <div v-if="selectedFile && !isUploading && !currentReport" class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Associar a conta ou cartão de crédito <span class="text-red-500">*</span>
+                </label>
+                <div v-if="accounts.length === 0 && creditCards.length === 0" class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                  <p class="text-sm text-yellow-800">
+                    Você precisa criar pelo menos uma conta bancária ou cartão de crédito antes de importar transações.
+                  </p>
+                </div>
+                <select
+                  v-else
+                  v-model="selectedAccountOrCard"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  :class="{
+                    'border-red-300': !selectedAccountOrCard && showValidationError
+                  }"
+                >
+                  <option value="">Selecione uma conta ou cartão de crédito</option>
+                  <optgroup v-if="accounts.length > 0" label="Contas Bancárias">
+                    <option
+                      v-for="account in accounts"
+                      :key="`account-${account.id}`"
+                      :value="`account-${account.id}`"
+                    >
+                      {{ account.name }}
+                    </option>
+                  </optgroup>
+                  <optgroup v-if="creditCards.length > 0" label="Cartões de Crédito">
+                    <option
+                      v-for="creditCard in creditCards"
+                      :key="`credit-card-${creditCard.id}`"
+                      :value="`credit-card-${creditCard.id}`"
+                    >
+                      {{ creditCard.name }}
+                    </option>
+                  </optgroup>
+                </select>
+                <p
+                  v-if="!selectedAccountOrCard && showValidationError"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  É necessário selecionar uma conta ou cartão de crédito
+                </p>
+              </div>
+
               <!-- Upload Status Display -->
               <div v-if="isUploading || currentReport" class="mb-6">
                 <!-- SENT Status -->
@@ -178,14 +224,15 @@
             v-if="selectedFile && !isUploading && !currentReport"
             type="button"
             @click="handleUpload"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            :disabled="!selectedAccountOrCard"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Importar
           </button>
           <button
             type="button"
             @click="handleClose"
-            :disabled="isUploading || (currentReport && currentReport.status !== 'IMPORTED' && currentReport.status !== 'FAILED')"
+            :disabled="!!(isUploading || (currentReport && currentReport.status !== 'IMPORTED' && currentReport.status !== 'FAILED'))"
             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ currentReport?.status === 'IMPORTED' || currentReport?.status === 'FAILED' ? 'Fechar' : 'Cancelar' }}
@@ -224,10 +271,14 @@ const {
 } = useImportReports()
 
 const { loadTransactions } = useTransactions()
+const { accounts, loadAccounts } = useAccounts()
+const { creditCards, loadCreditCards } = useCreditCards()
 
 // Local state
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
+const selectedAccountOrCard = ref<string>('')
+const showValidationError = ref(false)
 const isDragging = ref(false)
 const isUploading = ref(false)
 const uploadError = ref<string | null>(null)
@@ -264,6 +315,8 @@ const handleDrop = (event: DragEvent) => {
 
 const clearFile = () => {
   selectedFile.value = null
+  selectedAccountOrCard.value = ''
+  showValidationError.value = false
   uploadError.value = null
   if (fileInput.value) {
     fileInput.value.value = ''
@@ -273,12 +326,27 @@ const clearFile = () => {
 const handleUpload = async () => {
   if (!selectedFile.value) return
 
+  // Validate account/card selection
+  if (!selectedAccountOrCard.value) {
+    showValidationError.value = true
+    return
+  }
+
+  showValidationError.value = false
   isUploading.value = true
   uploadError.value = null
   clearError()
 
+  // Parse selected account or card
+  const isAccount = selectedAccountOrCard.value.startsWith('account-')
+  const id = parseInt(selectedAccountOrCard.value.split('-')[1])
+
+  const uploadOptions = isAccount
+    ? { account_id: id }
+    : { credit_card_id: id }
+
   try {
-    const result = await uploadCSV(selectedFile.value)
+    const result = await uploadCSV(selectedFile.value, uploadOptions)
 
     if (!result.success || !result.data) {
       uploadError.value = result.error?.message || 'Falha ao fazer upload do arquivo'
@@ -330,6 +398,8 @@ const handleClose = () => {
 
   // Reset state
   selectedFile.value = null
+  selectedAccountOrCard.value = ''
+  showValidationError.value = false
   currentReport.value = null
   uploadError.value = null
   showErrors.value = false
@@ -338,6 +408,14 @@ const handleClose = () => {
 
   emit('close')
 }
+
+// Load accounts and credit cards when modal opens
+onMounted(async () => {
+  await Promise.all([
+    loadAccounts(),
+    loadCreditCards()
+  ])
+})
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'

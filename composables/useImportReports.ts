@@ -17,7 +17,10 @@ export const useImportReports = () => {
   const pollingIntervals = ref<Map<number, NodeJS.Timeout>>(new Map())
 
   // Upload CSV file
-  const uploadCSV = async (file: File): Promise<ImportReportApiResult<CSVUploadResponse>> => {
+  const uploadCSV = async (
+    file: File,
+    options?: { account_id?: number; credit_card_id?: number }
+  ): Promise<ImportReportApiResult<CSVUploadResponse>> => {
     uploading.value = true
     error.value = null
 
@@ -32,9 +35,28 @@ export const useImportReports = () => {
       }
     }
 
+    // Validate that either account_id or credit_card_id is provided
+    if (!options?.account_id && !options?.credit_card_id) {
+      const errorMessage = 'É necessário selecionar uma conta ou cartão de crédito'
+      error.value = errorMessage
+      uploading.value = false
+      return {
+        success: false,
+        error: { message: errorMessage }
+      }
+    }
+
     try {
       const formData = new FormData()
       formData.append('file', file)
+      
+      if (options?.account_id) {
+        formData.append('account_id', String(options.account_id))
+      }
+      
+      if (options?.credit_card_id) {
+        formData.append('credit_card_id', String(options.credit_card_id))
+      }
 
       const response = await $fetch<CSVUploadResponse>('/finance/transactions/import-csv/', {
         baseURL: config.public.apiBase,
