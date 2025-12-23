@@ -15,7 +15,6 @@ export interface BaseCategory {
   updated_at: string
   is_active: boolean
   user: number
-  parent?: number | null
 }
 
 /**
@@ -34,7 +33,6 @@ export interface CategoryList {
   id: number
   name: string
   transaction_type: TransactionType
-  parent?: number | null
   is_active: boolean
   created_at?: string
   updated_at?: string
@@ -46,7 +44,6 @@ export interface CategoryList {
  */
 export interface CategoryDetail extends BaseCategory {
   subcategories: Record<string, any>[] // Array of subcategory objects
-  parent_category?: Record<string, any> | null // Parent category object
 }
 
 /**
@@ -62,7 +59,6 @@ export interface PatchedCategory {
   updated_at?: string
   is_active?: boolean
   user?: number
-  parent?: number | null
 }
 
 /**
@@ -73,7 +69,6 @@ export interface CreateCategoryRequest {
   name: string
   transaction_type: TransactionType
   description?: string
-  parent?: number | null
   is_active?: boolean
 }
 
@@ -85,7 +80,6 @@ export interface UpdateCategoryRequest {
   name: string
   transaction_type: TransactionType
   description?: string
-  parent?: number | null
   is_active: boolean
 }
 
@@ -94,7 +88,6 @@ export interface UpdateCategoryRequest {
  * Used for filtering categories in GET requests
  */
 export interface CategoryFilters {
-  parent?: number | 'null' | null
   transaction_type?: TransactionType | null
 }
 
@@ -105,7 +98,6 @@ export interface CategoryForm {
   name: string
   transaction_type: TransactionType | ''
   description: string
-  parent: string | number | null
   is_active: boolean
 }
 
@@ -126,15 +118,6 @@ export interface CategoriesListApiResponse {
 }
 
 /**
- * Category parent option interface for dropdowns
- */
-export interface CategoryParentOption {
-  id: number
-  name: string
-  transaction_type: TransactionType
-}
-
-/**
  * Category statistics interface
  */
 export interface CategoryStats {
@@ -143,14 +126,6 @@ export interface CategoryStats {
   expense_categories: number
   active_categories: number
   inactive_categories: number
-}
-
-/**
- * Category hierarchy interface for tree structures
- */
-export interface CategoryHierarchy extends CategoryList {
-  children?: CategoryHierarchy[]
-  level: number
 }
 
 /**
@@ -196,8 +171,7 @@ export const isCategoryDetail = (value: any): value is CategoryDetail => {
     typeof value.updated_at === 'string' &&
     typeof value.is_active === 'boolean' &&
     typeof value.user === 'number' &&
-    Array.isArray(value.subcategories) &&
-    (value.parent_category === null || typeof value.parent_category === 'object')
+    Array.isArray(value.subcategories)
   )
 }
 

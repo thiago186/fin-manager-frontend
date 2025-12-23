@@ -241,6 +241,7 @@
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { Transaction, TransactionForm } from '~/types/transactions'
 import type { CategoryList } from '~/types/categories'
+import type { SubcategoryList } from '~/types/subcategories'
 
 // Props
 interface Props {
@@ -269,6 +270,7 @@ const {
 } = useTransactions()
 
 const { categories, loadCategories } = useCategories()
+const { loadSubcategories: loadSubcategoriesApi } = useSubcategories()
 
 // Local state
 const isSubmitting = ref(false)
@@ -305,7 +307,7 @@ const availableCategories = computed(() => {
   )
 })
 
-const availableSubcategories = ref<CategoryList[]>([])
+const availableSubcategories = ref<SubcategoryList[]>([])
 
 // Methods
 const loadSubcategories = async () => {
@@ -316,13 +318,19 @@ const loadSubcategories = async () => {
   }
 
   try {
-    // This would need to be implemented in the categories composable
-    // For now, we'll use a mock implementation
-    availableSubcategories.value = categories.value.filter(cat => 
-      cat.parent === form.value.category_id && cat.is_active
-    )
+    const result = await loadSubcategoriesApi({
+      category: Number(form.value.category_id)
+    })
+    
+    if (result.success && result.data) {
+      // Filter to only show active subcategories
+      availableSubcategories.value = result.data.filter(sub => sub.is_active)
+    } else {
+      availableSubcategories.value = []
+    }
   } catch (err) {
     console.error('Error loading subcategories:', err)
+    availableSubcategories.value = []
   }
 }
 
