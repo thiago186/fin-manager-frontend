@@ -232,82 +232,85 @@
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow
-                  v-for="transaction in filteredTransactions"
-                  :key="transaction.id"
-                  class="hover:bg-muted/40"
-                >
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    {{ formatDate(transaction.occurred_at) }}
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap">
-                    <Badge :variant="transaction.transaction_type === 'INCOME' ? 'secondary' : transaction.transaction_type === 'EXPENSE' ? 'destructive' : 'outline'">
-                      {{ getTransactionTypeLabel(transaction.transaction_type) }}
-                    </Badge>
-                  </TableCell>
-                  <TableCell class="text-sm text-gray-900">
-                    <div class="max-w-xs truncate">
-                      {{ transaction.description || 'Sem descrição' }}
-                    </div>
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    {{ transaction.category?.name || '-' }}
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    {{ transaction.subcategory?.name || '-' }}
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 mr-2">
-                        <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
-                        <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
+                <template v-if="filteredTransactions.length > 0">
+                  <TableRow
+                    v-for="transaction in filteredTransactions"
+                    :key="transaction.id"
+                    class="hover:bg-muted/40"
+                  >
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                      {{ formatDate(transaction.occurred_at) }}
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap">
+                      <Badge :variant="transaction.transaction_type === 'INCOME' ? 'secondary' : transaction.transaction_type === 'EXPENSE' ? 'destructive' : 'outline'">
+                        {{ getTransactionTypeLabel(transaction.transaction_type) }}
+                      </Badge>
+                    </TableCell>
+                    <TableCell class="text-sm text-gray-900">
+                      <div class="max-w-xs truncate">
+                        {{ transaction.description || 'Sem descrição' }}
                       </div>
-                      <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm font-medium text-right">
-                    <span :class="[getTransactionTypeColor(transaction.transaction_type)]">
-                      {{ formatCurrency(transaction.amount) }}
-                    </span>
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900 text-center">
-                    <span v-if="transaction.installments_total > 1">
-                      {{ transaction.installment_number }}/{{ transaction.installments_total }}
-                    </span>
-                    <span v-else>-</span>
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center justify-end space-x-2">
-                      <Button variant="ghost" size="icon" @click="editTransaction(transaction)">
-                        <PencilIcon class="h-4 w-4" />
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                      {{ transaction.category?.name || '-' }}
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                      {{ transaction.subcategory?.name || '-' }}
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 mr-2">
+                          <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
+                          <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-sm font-medium text-right">
+                      <span :class="[getTransactionTypeColor(transaction.transaction_type)]">
+                        {{ formatCurrency(transaction.amount) }}
+                      </span>
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900 text-center">
+                      <span v-if="transaction.installments_total > 1">
+                        {{ transaction.installment_number }}/{{ transaction.installments_total }}
+                      </span>
+                      <span v-else>-</span>
+                    </TableCell>
+                    <TableCell class="whitespace-nowrap text-right text-sm font-medium">
+                      <div class="flex items-center justify-end space-x-2">
+                        <Button variant="ghost" size="icon" @click="editTransaction(transaction)">
+                          <PencilIcon class="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" @click="deleteTransaction(transaction.id)">
+                          <TrashIcon class="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </template>
+                <TableEmpty
+                  v-else-if="!loading"
+                  :colspan="tableColumns.length"
+                >
+                  <div class="text-center py-12">
+                    <DocumentTextIcon class="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">
+                      Nenhuma transação encontrada
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Comece criando sua primeira transação.
+                    </p>
+                    <div class="mt-6">
+                      <Button @click="showCreateModal = true">
+                        <PlusIcon class="h-4 w-4 mr-2" />
+                        Nova Transação
                       </Button>
-                      <Button variant="ghost" size="icon" @click="deleteTransaction(transaction.id)">
-                        <TrashIcon class="h-4 w-4 text-destructive" />
-                      </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </TableEmpty>
               </TableBody>
             </Table>
-          </div>
-
-          <div
-            v-if="filteredTransactions.length === 0 && !loading"
-            class="text-center py-12"
-          >
-            <DocumentTextIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma transação encontrada
-            </h3>
-            <p class="mt-1 text-sm text-gray-500">
-              Comece criando sua primeira transação.
-            </p>
-            <div class="mt-6">
-              <Button @click="showCreateModal = true">
-                <PlusIcon class="h-4 w-4 mr-2" />
-                Nova Transação
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -362,6 +365,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow
