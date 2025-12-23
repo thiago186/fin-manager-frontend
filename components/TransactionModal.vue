@@ -119,7 +119,8 @@
                   <select
                     v-model="form.category_id"
                     @change="loadSubcategories"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    :disabled="isEdit"
+                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">Selecione uma categoria</option>
                     <option 
@@ -139,8 +140,9 @@
                   </label>
                   <select
                     v-model="form.subcategory_id"
-                    :disabled="!form.category_id"
-                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    @change="handleSubcategoryChange"
+                    :disabled="isEdit ? false : !form.category_id"
+                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">Selecione uma subcategoria</option>
                     <option 
@@ -311,30 +313,65 @@ const availableSubcategories = ref<SubcategoryList[]>([])
 
 // Methods
 const loadSubcategories = async () => {
-  if (!form.value.category_id) {
-    availableSubcategories.value = []
-    form.value.subcategory_id = null
-    return
-  }
-
-  try {
-    const result = await loadSubcategoriesApi({
-      category: Number(form.value.category_id)
-    })
-    
-    if (result.success && result.data) {
-      // Filter to only show active subcategories
-      availableSubcategories.value = result.data.filter(sub => sub.is_active)
-    } else {
+  // When editing, load all subcategories filtered by transaction type
+  // When creating, load subcategories filtered by category
+  if (props.isEdit) {
+    // Load all subcategories for the current transaction type
+    try {
+      const result = await loadSubcategoriesApi()
+      
+      if (result.success && result.data) {
+        // Filter by transaction type and active status
+        const transactionType = form.value.transaction_type === 'INCOME' ? 'income' : 'expense'
+        availableSubcategories.value = result.data.filter(sub => 
+          sub.transaction_type === transactionType && sub.is_active
+        )
+      } else {
+        availableSubcategories.value = []
+      }
+    } catch (err) {
+      console.error('Error loading subcategories:', err)
       availableSubcategories.value = []
     }
-  } catch (err) {
-    console.error('Error loading subcategories:', err)
-    availableSubcategories.value = []
+  } else {
+    // Original behavior for creating transactions
+    if (!form.value.category_id) {
+      availableSubcategories.value = []
+      form.value.subcategory_id = null
+      return
+    }
+
+    try {
+      const result = await loadSubcategoriesApi({
+        category: Number(form.value.category_id)
+      })
+      
+      if (result.success && result.data) {
+        // Filter to only show active subcategories
+        availableSubcategories.value = result.data.filter(sub => sub.is_active)
+      } else {
+        availableSubcategories.value = []
+      }
+    } catch (err) {
+      console.error('Error loading subcategories:', err)
+      availableSubcategories.value = []
+    }
   }
 }
 
-const initializeForm = () => {
+const handleSubcategoryChange = () => {
+  // When editing, automatically set category_id from the selected subcategory
+  if (props.isEdit && form.value.subcategory_id) {
+    const selectedSubcategory = availableSubcategories.value.find(
+      sub => sub.id === Number(form.value.subcategory_id)
+    )
+    if (selectedSubcategory) {
+      form.value.category_id = String(selectedSubcategory.category)
+    }
+  }
+}
+
+const initializeForm = async () => {
   if (props.transaction && props.isEdit) {
     form.value = {
       transaction_type: props.transaction.transaction_type,
@@ -349,6 +386,14 @@ const initializeForm = () => {
       category_id: props.transaction.category_id ? String(props.transaction.category_id) : null,
       subcategory_id: props.transaction.subcategory_id ? String(props.transaction.subcategory_id) : null,
       tag_ids: props.transaction.tag_ids || []
+    }
+    
+    // When editing, ensure category_id is synced from subcategory if subcategory exists
+    if (props.isEdit && form.value.subcategory_id && form.value.transaction_type) {
+      // Load subcategories first to get the category from the subcategory
+      await loadSubcategories()
+      // Sync category from subcategory
+      handleSubcategoryChange()
     }
   } else {
     form.value = {
@@ -411,32 +456,37 @@ watch(() => form.value.transaction_type, () => {
   form.value.category_id = null
   form.value.subcategory_id = null
   availableSubcategories.value = []
+  // Reload subcategories when transaction type changes (especially important for edit mode)
+  if (form.value.transaction_type) {
+    loadSubcategories()
+  }
 })
 
-// Watch for category changes to load subcategories
+// Watch for category changes to load subcategories (only for create mode)
 watch(() => form.value.category_id, () => {
-  loadSubcategories()
+  if (!props.isEdit) {
+    loadSubcategories()
+  }
+})
+
+// Watch for subcategory changes to update category (only for edit mode)
+watch(() => form.value.subcategory_id, () => {
+  if (props.isEdit && form.value.subcategory_id) {
+    handleSubcategoryChange()
+  }
 })
 
 // Watch for transaction prop changes to re-initialize form when editing
-watch(() => props.transaction, () => {
+watch(() => props.transaction, async () => {
   if (props.transaction && props.isEdit) {
-    initializeForm()
-    // Load subcategories if category is set
-    if (props.transaction.category_id) {
-      loadSubcategories()
-    }
+    await initializeForm()
   }
 }, { immediate: true })
 
 // Watch for isEdit prop changes to re-initialize form
-watch(() => props.isEdit, () => {
+watch(() => props.isEdit, async () => {
   if (props.isEdit && props.transaction) {
-    initializeForm()
-    // Load subcategories if category is set
-    if (props.transaction.category_id) {
-      loadSubcategories()
-    }
+    await initializeForm()
   }
 })
 </script> 
