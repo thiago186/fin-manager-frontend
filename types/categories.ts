@@ -36,6 +36,8 @@ export interface CategoryList {
   transaction_type: TransactionType
   parent?: number | null
   is_active: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 /**

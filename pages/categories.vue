@@ -378,7 +378,18 @@ const closeModal = () => {
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString()
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date string:', dateString)
+      return 'N/A'
+    }
+    return date.toLocaleDateString()
+  } catch (error) {
+    console.warn('Error parsing date:', dateString, error)
+    return 'N/A'
+  }
 }
 
 // Load data on mount
