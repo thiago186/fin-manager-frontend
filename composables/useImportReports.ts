@@ -95,11 +95,22 @@ export const useImportReports = () => {
         credentials: 'include'
       })
 
-      importReports.value = response
+      // Ensure response is an array
+      importReports.value = Array.isArray(response) ? response : []
       loading.value = false
-      return { success: true, data: response }
+      console.log('Import reports loaded:', importReports.value.length)
+      return { success: true, data: importReports.value }
     } catch (err: any) {
-      const errorMessage = err?.data?.message || 'Falha ao carregar relatórios de importação'
+      let errorMessage = 'Falha ao carregar relatórios de importação'
+      
+      if (err?.data?.message) {
+        errorMessage = err.data.message
+      } else if (err?.data?.detail) {
+        errorMessage = err.data.detail
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+      
       error.value = errorMessage
       loading.value = false
       console.error('Error loading import reports:', err)

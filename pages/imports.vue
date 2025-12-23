@@ -54,6 +54,29 @@
           </div>
         </div>
 
+        <!-- Empty State -->
+        <div
+          v-else-if="importReports.length === 0"
+          class="text-center py-12"
+        >
+          <DocumentArrowUpIcon class="mx-auto h-12 w-12 text-gray-400" />
+          <h3 class="mt-2 text-sm font-medium text-gray-900">
+            Nenhuma importação encontrada
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Comece importando seu primeiro arquivo CSV.
+          </p>
+          <div class="mt-6">
+            <button
+              @click="showImportModal = true"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <ArrowUpTrayIcon class="h-4 w-4 mr-2" />
+              Importar CSV
+            </button>
+          </div>
+        </div>
+
         <!-- Table -->
         <div v-else class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -87,7 +110,7 @@
                 v-for="report in importReports"
                 :key="report.id"
                 class="hover:bg-gray-50 cursor-pointer"
-                @click="selectedReport = report"
+                @click="selectedReport = { ...report, errors: [...report.errors] }"
               >
                 <!-- File Name -->
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -149,7 +172,7 @@
                 <!-- Actions -->
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
-                    @click.stop="selectedReport = report"
+                    @click.stop="selectedReport = { ...report, errors: [...report.errors] }"
                     class="text-indigo-600 hover:text-indigo-900"
                   >
                     Ver detalhes
@@ -158,29 +181,6 @@
               </tr>
             </tbody>
           </table>
-
-          <!-- Empty State -->
-          <div
-            v-if="importReports.length === 0 && !loading"
-            class="text-center py-12"
-          >
-            <DocumentArrowUpIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma importação encontrada
-            </h3>
-            <p class="mt-1 text-sm text-gray-500">
-              Comece importando seu primeiro arquivo CSV.
-            </p>
-            <div class="mt-6">
-              <button
-                @click="showImportModal = true"
-                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <ArrowUpTrayIcon class="h-4 w-4 mr-2" />
-                Importar CSV
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

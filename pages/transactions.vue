@@ -10,6 +10,13 @@
           </p>
         </div>
         <div class="flex space-x-3">
+          <NuxtLink
+            to="/imports"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <ClockIcon class="h-4 w-4 mr-2" />
+            Histórico de Importações
+          </NuxtLink>
           <button
             @click="showImportModal = true"
             class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -469,7 +476,8 @@ import {
   TrashIcon,
   BanknotesIcon,
   CreditCardIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  ClockIcon
 } from '@heroicons/vue/24/outline'
 
 import type { Transaction, TransactionTableFilters, TransactionTableSort } from '~/types/transactions'
