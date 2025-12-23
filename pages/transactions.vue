@@ -277,57 +277,67 @@
                       class="whitespace-nowrap text-sm text-gray-900"
                       :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) }"
                     >
-                      <div v-if="editingCellId === transaction.id" class="w-full">
-                        <Select 
-                          :model-value="getCurrentAccountCardValue(transaction)"
-                          @update:model-value="(value) => handleAccountCardChange(transaction, value as string)"
-                          @open-change="(open: boolean) => { if (!open) editingCellId = null }"
-                        >
-                          <SelectTrigger class="w-full">
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhum</SelectItem>
-                            <SelectGroup v-if="accounts.length > 0">
-                              <SelectLabel>Contas</SelectLabel>
-                              <SelectItem
-                                v-for="account in accounts"
-                                :key="`account_${account.id}`"
-                                :value="`account_${account.id}`"
-                              >
-                                <div class="flex items-center">
-                                  <BanknotesIcon class="h-4 w-4 mr-2 text-indigo-600" />
-                                  {{ account.name }}
-                                </div>
-                              </SelectItem>
-                            </SelectGroup>
-                            <SelectGroup v-if="creditCards.length > 0">
-                              <SelectLabel>Cartões de Crédito</SelectLabel>
-                              <SelectItem
-                                v-for="creditCard in creditCards"
-                                :key="`credit_card_${creditCard.id}`"
-                                :value="`credit_card_${creditCard.id}`"
-                              >
-                                <div class="flex items-center">
-                                  <CreditCardIcon class="h-4 w-4 mr-2 text-blue-600" />
-                                  {{ creditCard.name }}
-                                </div>
-                              </SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div 
-                        v-else 
-                        class="flex items-center cursor-pointer hover:bg-muted/50 p-1 rounded"
-                        @click="editingCellId = transaction.id"
+                      <Select 
+                        :model-value="getCurrentAccountCardValue(transaction)"
+                        @update:model-value="(value) => handleAccountCardChange(transaction, value as string)"
+                        @open-change="(open: boolean) => { 
+                          if (open) {
+                            editingCellId = transaction.id
+                          } else {
+                            editingCellId = null
+                          }
+                        }"
                       >
-                        <div class="flex-shrink-0 mr-2">
-                          <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
-                          <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
-                        </div>
-                        <span>{{ transaction.account?.name || transaction.credit_card?.name || '-' }}</span>
-                      </div>
+                        <SelectTrigger 
+                          class="w-full border-none shadow-none hover:bg-muted/50 p-1 h-auto data-[state=open]:bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
+                          :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) }"
+                        >
+                          <div class="flex items-center w-full cursor-pointer">
+                            <div class="flex-shrink-0 mr-2">
+                              <BanknotesIcon 
+                                v-if="getDisplayAccountCardIcon(transaction) === 'account'" 
+                                class="h-4 w-4 text-indigo-600" 
+                              />
+                              <CreditCardIcon 
+                                v-else-if="getDisplayAccountCardIcon(transaction) === 'credit_card'" 
+                                class="h-4 w-4 text-blue-600" 
+                              />
+                            </div>
+                            <SelectValue class="flex-1 text-left text-sm text-gray-900">
+                              {{ getDisplayAccountCardName(transaction) }}
+                            </SelectValue>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectGroup v-if="accounts.length > 0">
+                            <SelectLabel>Contas</SelectLabel>
+                            <SelectItem
+                              v-for="account in accounts"
+                              :key="`account_${account.id}`"
+                              :value="`account_${account.id}`"
+                            >
+                              <div class="flex items-center">
+                                <BanknotesIcon class="h-4 w-4 mr-2 text-indigo-600" />
+                                {{ account.name }}
+                              </div>
+                            </SelectItem>
+                          </SelectGroup>
+                          <SelectGroup v-if="creditCards.length > 0">
+                            <SelectLabel>Cartões de Crédito</SelectLabel>
+                            <SelectItem
+                              v-for="creditCard in creditCards"
+                              :key="`credit_card_${creditCard.id}`"
+                              :value="`credit_card_${creditCard.id}`"
+                            >
+                              <div class="flex items-center">
+                                <CreditCardIcon class="h-4 w-4 mr-2 text-blue-600" />
+                                {{ creditCard.name }}
+                              </div>
+                            </SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell class="whitespace-nowrap text-sm font-medium text-right">
                       <span :class="[getTransactionTypeColor(transaction.transaction_type)]">
@@ -585,6 +595,46 @@ const getCurrentAccountCardValue = (transaction: Transaction): string => {
     return `credit_card_${creditCardId}`
   }
   return 'none'
+}
+
+const getDisplayAccountCardName = (transaction: Transaction): string => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  
+  if (pendingChange) {
+    if (pendingChange.account_id !== null && pendingChange.account_id !== undefined) {
+      const account = accounts.value.find(a => a.id === pendingChange.account_id)
+      return account?.name || '-'
+    }
+    if (pendingChange.credit_card_id !== null && pendingChange.credit_card_id !== undefined) {
+      const creditCard = creditCards.value.find(c => c.id === pendingChange.credit_card_id)
+      return creditCard?.name || '-'
+    }
+    return '-'
+  }
+  
+  // Show original value
+  return transaction.account?.name || transaction.credit_card?.name || '-'
+}
+
+const getDisplayAccountCardIcon = (transaction: Transaction) => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  
+  if (pendingChange) {
+    if (pendingChange.account_id !== null && pendingChange.account_id !== undefined) {
+      return 'account'
+    }
+    if (pendingChange.credit_card_id !== null && pendingChange.credit_card_id !== undefined) {
+      return 'credit_card'
+    }
+    return null
+  }
+  
+  // Show original value
+  if (transaction.account) return 'account'
+  if (transaction.credit_card) return 'credit_card'
+  return null
 }
 
 const handleAccountCardChange = (transaction: Transaction, value: string) => {
