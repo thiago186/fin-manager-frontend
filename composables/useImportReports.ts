@@ -2,7 +2,8 @@ import type {
   ImportReport,
   ImportStatus,
   CSVUploadResponse,
-  ImportReportApiResult
+  ImportReportApiResult,
+  PaginatedResponse
 } from '~/types/importReports'
 
 export const useImportReports = () => {
@@ -90,13 +91,13 @@ export const useImportReports = () => {
     error.value = null
 
     try {
-      const response = await $fetch<ImportReport[]>('/finance/import-reports/', {
+      const response = await $fetch<PaginatedResponse<ImportReport>>('/finance/import-reports/', {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
 
-      // Ensure response is an array
-      importReports.value = Array.isArray(response) ? response : []
+      // Extract results from paginated response
+      importReports.value = response.results || []
       loading.value = false
       console.log('Import reports loaded:', importReports.value.length)
       return { success: true, data: importReports.value }

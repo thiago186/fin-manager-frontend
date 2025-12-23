@@ -48,3 +48,13 @@ export interface ImportReportApiResult<T> {
   error?: ImportReportApiError
 }
 
+/**
+ * Paginated API response
+ */
+export interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
