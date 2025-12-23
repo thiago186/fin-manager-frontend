@@ -53,16 +53,10 @@
           />
         </div>
 
-        <!-- Dates -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <Label>Data da Transação *</Label>
-            <Input v-model="form.occurred_at" type="date" required />
-          </div>
-          <div class="space-y-2">
-            <Label>Data de Cobrança no Cartão</Label>
-            <Input v-model="form.charge_at_card" type="date" />
-          </div>
+        <!-- Date -->
+        <div class="space-y-2">
+          <Label>Data da Transação *</Label>
+          <Input v-model="form.occurred_at" type="date" required />
         </div>
 
         <!-- Account & Credit Card -->
@@ -264,7 +258,6 @@ const form = ref<TransactionForm>({
   amount: '',
   description: '',
   occurred_at: new Date().toISOString().split('T')[0],
-  charge_at_card: '',
   installments_total: '1',
   installment_number: '1',
   account_id: null,
@@ -352,7 +345,6 @@ const initializeForm = async () => {
       amount: props.transaction.amount,
       description: props.transaction.description || '',
       occurred_at: props.transaction.occurred_at,
-      charge_at_card: props.transaction.charge_at_card || '',
       installments_total: String(props.transaction.installments_total),
       installment_number: String(props.transaction.installment_number),
       account_id: props.transaction.account_id ? String(props.transaction.account_id) : null,
@@ -375,7 +367,6 @@ const initializeForm = async () => {
       amount: '',
       description: '',
       occurred_at: new Date().toISOString().split('T')[0],
-      charge_at_card: '',
       installments_total: '1',
       installment_number: '1',
       account_id: null,

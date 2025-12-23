@@ -4,7 +4,7 @@
       <DialogHeader>
         <DialogTitle>{{ isEdit ? 'Editar Cartão de Crédito' : 'Novo Cartão de Crédito' }}</DialogTitle>
         <DialogDescription>
-          Configure as datas de fechamento e vencimento do cartão.
+          Preencha os detalhes do cartão de crédito.
         </DialogDescription>
       </DialogHeader>
 
@@ -17,50 +17,6 @@
             required
             placeholder="Ex: Nubank Credit Card"
           />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <Label>Data de Fechamento *</Label>
-            <Select v-model="form.close_date" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o dia" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="day in availableDays"
-                  :key="day"
-                  :value="day"
-                >
-                  {{ formatDayOfMonth(day) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p class="text-sm text-muted-foreground">
-              Dia do mês em que o ciclo de faturamento fecha
-            </p>
-          </div>
-
-          <div class="space-y-2">
-            <Label>Data de Vencimento *</Label>
-            <Select v-model="form.due_date" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o dia" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="day in availableDays"
-                  :key="day"
-                  :value="day"
-                >
-                  {{ formatDayOfMonth(day) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p class="text-sm text-muted-foreground">
-              Dia do mês em que o pagamento é devido
-            </p>
-          </div>
         </div>
 
         <div class="flex items-center gap-2">
@@ -102,13 +58,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
@@ -134,8 +83,6 @@ const {
   createCreditCard, 
   updateCreditCard, 
   formatCreditCardData,
-  formatDayOfMonth,
-  getAvailableDays,
   clearError
 } = useCreditCards()
 
@@ -146,28 +93,19 @@ const error = ref<string | null>(null)
 // Form state
 const form = ref<CreditCardForm>({
   name: '',
-  close_date: 15,
-  due_date: 20,
   is_active: true
 })
-
-// Available days for select options
-const availableDays = computed(() => getAvailableDays())
 
 // Methods
 const initializeForm = () => {
   if (props.creditCard && props.isEdit) {
     form.value = {
       name: props.creditCard.name,
-      close_date: props.creditCard.close_date,
-      due_date: props.creditCard.due_date,
       is_active: props.creditCard.is_active
     }
   } else {
     form.value = {
       name: '',
-      close_date: 15,
-      due_date: 20,
       is_active: true
     }
   }

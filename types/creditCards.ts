@@ -8,8 +8,6 @@
 export interface CreditCard {
   id: number
   name: string
-  close_date: number
-  due_date: number
   created_at: string
   updated_at: string
   is_active: boolean
@@ -20,8 +18,6 @@ export interface CreditCard {
  */
 export interface CreditCardForm {
   name: string
-  close_date: number
-  due_date: number
   is_active: boolean
 }
 
@@ -29,8 +25,6 @@ export interface CreditCardForm {
  * Credit Card filters for API requests
  */
 export interface CreditCardFilters {
-  close_date?: number
-  due_date?: number
   is_active?: boolean
 }
 
@@ -39,8 +33,6 @@ export interface CreditCardFilters {
  */
 export interface CreateCreditCardRequest {
   name: string
-  close_date: number
-  due_date: number
   is_active: boolean
 }
 
@@ -49,8 +41,6 @@ export interface CreateCreditCardRequest {
  */
 export interface UpdateCreditCardRequest {
   name?: string
-  close_date?: number
-  due_date?: number
   is_active?: boolean
 }
 
@@ -71,8 +61,6 @@ export interface CreditCardApiResult<T> {
  */
 export interface CreditCardTableFilters {
   search?: string
-  close_date?: number
-  due_date?: number
   is_active?: boolean
 }
 

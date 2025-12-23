@@ -28,12 +28,6 @@ export const useCreditCards = () => {
       const params = new URLSearchParams()
       
       // Add API filters
-      if (apiFilters?.close_date) {
-        params.append('close_date', String(apiFilters.close_date))
-      }
-      if (apiFilters?.due_date) {
-        params.append('due_date', String(apiFilters.due_date))
-      }
       if (apiFilters?.is_active !== undefined) {
         params.append('is_active', String(apiFilters.is_active))
       }
@@ -171,8 +165,6 @@ export const useCreditCards = () => {
   const formatCreditCardData = (form: CreditCardForm): CreateCreditCardRequest | UpdateCreditCardRequest => {
     return {
       name: form.name,
-      close_date: form.close_date,
-      due_date: form.due_date,
       is_active: form.is_active
     }
   }
@@ -195,20 +187,6 @@ export const useCreditCards = () => {
       const searchTerm = filters.value.search.toLowerCase()
       filtered = filtered.filter(creditCard => 
         creditCard.name.toLowerCase().includes(searchTerm)
-      )
-    }
-
-    // Apply close date filter
-    if (filters.value.close_date) {
-      filtered = filtered.filter(creditCard => 
-        creditCard.close_date === filters.value.close_date
-      )
-    }
-
-    // Apply due date filter
-    if (filters.value.due_date) {
-      filtered = filtered.filter(creditCard => 
-        creditCard.due_date === filters.value.due_date
       )
     }
 
@@ -248,47 +226,16 @@ export const useCreditCards = () => {
     const active = creditCards.value.filter(creditCard => creditCard.is_active).length
     const inactive = total - active
     
-    // Group by close dates
-    const closeDateGroups = creditCards.value.reduce((acc, card) => {
-      acc[card.close_date] = (acc[card.close_date] || 0) + 1
-      return acc
-    }, {} as Record<number, number>)
-    
-    // Group by due dates
-    const dueDateGroups = creditCards.value.reduce((acc, card) => {
-      acc[card.due_date] = (acc[card.due_date] || 0) + 1
-      return acc
-    }, {} as Record<number, number>)
-    
     return {
       total,
       active,
-      inactive,
-      closeDateGroups,
-      dueDateGroups
+      inactive
     }
   })
 
   // Utility functions
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('pt-BR')
-  }
-
-  const formatDayOfMonth = (day: number): string => {
-    return `${day}º`
-  }
-
-  const getCloseDateLabel = (day: number): string => {
-    return `Fecha no dia ${formatDayOfMonth(day)}`
-  }
-
-  const getDueDateLabel = (day: number): string => {
-    return `Vence no dia ${formatDayOfMonth(day)}`
-  }
-
-  // Get available days for select options
-  const getAvailableDays = (): number[] => {
-    return Array.from({ length: 31 }, (_, i) => i + 1)
   }
 
   // Initialize credit cards data
@@ -318,10 +265,6 @@ export const useCreditCards = () => {
     applyTableFilters,
     applyTableSort,
     formatDate,
-    formatDayOfMonth,
-    getCloseDateLabel,
-    getDueDateLabel,
-    getAvailableDays,
     initialize,
     
     // Clear error

@@ -181,7 +181,6 @@ export const useTransactions = () => {
       amount: form.amount,
       description: form.description || undefined,
       occurred_at: form.occurred_at,
-      charge_at_card: form.charge_at_card || undefined,
       installments_total: form.installments_total ? Number(form.installments_total) : undefined,
       installment_number: form.installment_number ? Number(form.installment_number) : undefined,
       account_id: form.account_id === '' || form.account_id === null ? null : Number(form.account_id),

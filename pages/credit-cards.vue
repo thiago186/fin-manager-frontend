@@ -7,7 +7,7 @@
           <div>
             <h1 class="text-3xl font-bold text-gray-900">Cartões de Crédito</h1>
             <p class="mt-1 text-sm text-gray-500">
-              Gerencie seus cartões de crédito e acompanhe as datas de fechamento e vencimento
+              Gerencie seus cartões de crédito
             </p>
           </div>
         <Button @click="showCreateModal = true">
@@ -50,16 +50,6 @@
             <div class="text-lg font-semibold">{{ creditCardStats.inactive }}</div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Próximo Vencimento</CardTitle>
-            <CalendarIcon class="h-5 w-5 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div class="text-lg font-semibold">{{ getNextDueDate() }}</div>
-          </CardContent>
-        </Card>
       </div>
     </div>
 
@@ -71,7 +61,7 @@
           <CardDescription>Refine a lista de cartões.</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="space-y-2">
               <Label>Buscar</Label>
               <Input
@@ -79,36 +69,6 @@
                 type="text"
                 placeholder="Nome do cartão..."
               />
-            </div>
-
-            <div class="space-y-2">
-              <Label>Data de Fechamento</Label>
-              <Select v-model="localFilters.close_date">
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as datas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="null">Todas as datas</SelectItem>
-                  <SelectItem v-for="day in availableDays" :key="day" :value="day">
-                    {{ formatDayOfMonth(day) }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div class="space-y-2">
-              <Label>Data de Vencimento</Label>
-              <Select v-model="localFilters.due_date">
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as datas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="null">Todas as datas</SelectItem>
-                  <SelectItem v-for="day in availableDays" :key="day" :value="day">
-                    {{ formatDayOfMonth(day) }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div class="space-y-2">
@@ -220,12 +180,6 @@
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    {{ getCloseDateLabel(creditCard.close_date) }}
-                  </TableCell>
-                  <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                    {{ getDueDateLabel(creditCard.due_date) }}
-                  </TableCell>
                   <TableCell class="whitespace-nowrap">
                     <Badge :variant="creditCard.is_active ? 'secondary' : 'destructive'">
                       {{ creditCard.is_active ? 'Ativo' : 'Inativo' }}
@@ -285,7 +239,6 @@ import {
   CreditCardIcon,
   CheckCircleIcon,
   XCircleIcon,
-  CalendarIcon,
   FunnelIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
@@ -344,10 +297,6 @@ const {
   applyTableFilters,
   applyTableSort,
   formatDate,
-  formatDayOfMonth,
-  getCloseDateLabel,
-  getDueDateLabel,
-  getAvailableDays,
   initialize
 } = useCreditCards()
 
@@ -360,15 +309,10 @@ const localFilters = ref<CreditCardTableFilters>({})
 // Table columns configuration
 const tableColumns = [
   { key: 'name', label: 'Cartão', sortable: true, width: '300px' },
-  { key: 'close_date', label: 'Fechamento', sortable: true, width: '150px' },
-  { key: 'due_date', label: 'Vencimento', sortable: true, width: '150px' },
   { key: 'is_active', label: 'Status', sortable: true, width: '100px' },
   { key: 'created_at', label: 'Criado em', sortable: true, width: '120px' },
   { key: 'actions', label: 'Ações', sortable: false, width: '100px', align: 'right' }
 ]
-
-// Available days for filter options
-const availableDays = computed(() => getAvailableDays())
 
 // Methods
 const handleSort = (key: string) => {
@@ -408,31 +352,6 @@ const closeModal = () => {
 const handleCreditCardSaved = () => {
   closeModal()
   // Credit cards will be automatically refreshed by the composable
-}
-
-const getNextDueDate = (): string => {
-  if (filteredCreditCards.value.length === 0) return 'N/A'
-  
-  const today = new Date()
-  const currentDay = today.getDate()
-  
-  // Find the next due date
-  const nextDueCard = filteredCreditCards.value
-    .filter(card => card.is_active)
-    .sort((a, b) => {
-      // Calculate days until due date
-      const aDaysUntil = a.due_date >= currentDay ? a.due_date - currentDay : a.due_date + 30 - currentDay
-      const bDaysUntil = b.due_date >= currentDay ? b.due_date - currentDay : b.due_date + 30 - currentDay
-      return aDaysUntil - bDaysUntil
-    })[0]
-  
-  if (!nextDueCard) return 'N/A'
-  
-  const daysUntil = nextDueCard.due_date >= currentDay 
-    ? nextDueCard.due_date - currentDay 
-    : nextDueCard.due_date + 30 - currentDay
-  
-  return `${nextDueCard.name} (${daysUntil} dias)`
 }
 
 // Initialize data

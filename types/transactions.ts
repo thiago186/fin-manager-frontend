@@ -23,8 +23,6 @@ export interface Account {
 export interface CreditCard {
   id: number
   name: string
-  close_date: number
-  due_date: number
   created_at: string
   updated_at: string
   is_active: boolean
@@ -60,7 +58,6 @@ export interface Transaction {
   amount: string
   description?: string | null
   occurred_at: string
-  charge_at_card?: string | null
   installments_total: number
   installment_number: number
   installment_group_id: string | null
@@ -88,7 +85,6 @@ export interface PatchedTransaction {
   amount?: string
   description?: string | null
   occurred_at?: string
-  charge_at_card?: string | null
   installments_total?: number
   installment_number?: number
   installment_group_id?: string | null
@@ -114,7 +110,6 @@ export interface CreateTransactionRequest {
   amount: string
   description?: string
   occurred_at: string
-  charge_at_card?: string
   installments_total?: number
   installment_number?: number
   account_id?: number | null
@@ -132,7 +127,6 @@ export interface UpdateTransactionRequest {
   amount: string
   description?: string
   occurred_at: string
-  charge_at_card?: string
   installments_total?: number
   installment_number?: number
   account_id?: number | null
@@ -161,7 +155,6 @@ export interface TransactionForm {
   amount: string
   description: string
   occurred_at: string
-  charge_at_card: string
   installments_total: string
   installment_number: string
   account_id: string | number | null
