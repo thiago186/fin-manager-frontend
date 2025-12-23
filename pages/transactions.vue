@@ -170,8 +170,24 @@
       <!-- Transactions Table -->
       <Card>
         <CardHeader>
-          <CardTitle class="text-lg">Lista de Transações</CardTitle>
-          <CardDescription>{{ filteredTransactions.length }} transações encontradas</CardDescription>
+          <div class="flex items-center justify-between">
+            <div>
+              <CardTitle class="text-lg">Lista de Transações</CardTitle>
+              <CardDescription>{{ filteredTransactions.length }} transações encontradas</CardDescription>
+            </div>
+            <Button
+              v-if="hasPendingChanges"
+              @click="handleSaveChanges"
+              :disabled="savingChanges"
+            >
+              <CheckIcon v-if="!savingChanges" class="h-4 w-4 mr-2" />
+              <svg v-else class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ savingChanges ? 'Salvando...' : 'Salvar Alterações' }}
+            </Button>
+          </div>
         </CardHeader>
 
         <!-- Loading State -->
@@ -257,8 +273,55 @@
                     <TableCell class="whitespace-nowrap text-sm text-gray-900">
                       {{ transaction.subcategory?.name || '-' }}
                     </TableCell>
-                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                      <div class="flex items-center">
+                    <TableCell 
+                      class="whitespace-nowrap text-sm text-gray-900"
+                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) }"
+                    >
+                      <div v-if="editingCellId === transaction.id" class="w-full">
+                        <Select 
+                          :model-value="getCurrentAccountCardValue(transaction)"
+                          @update:model-value="(value) => handleAccountCardChange(transaction, value as string)"
+                          @open-change="(open: boolean) => { if (!open) editingCellId = null }"
+                        >
+                          <SelectTrigger class="w-full">
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            <SelectGroup v-if="accounts.length > 0">
+                              <SelectLabel>Contas</SelectLabel>
+                              <SelectItem
+                                v-for="account in accounts"
+                                :key="`account_${account.id}`"
+                                :value="`account_${account.id}`"
+                              >
+                                <div class="flex items-center">
+                                  <BanknotesIcon class="h-4 w-4 mr-2 text-indigo-600" />
+                                  {{ account.name }}
+                                </div>
+                              </SelectItem>
+                            </SelectGroup>
+                            <SelectGroup v-if="creditCards.length > 0">
+                              <SelectLabel>Cartões de Crédito</SelectLabel>
+                              <SelectItem
+                                v-for="creditCard in creditCards"
+                                :key="`credit_card_${creditCard.id}`"
+                                :value="`credit_card_${creditCard.id}`"
+                              >
+                                <div class="flex items-center">
+                                  <CreditCardIcon class="h-4 w-4 mr-2 text-blue-600" />
+                                  {{ creditCard.name }}
+                                </div>
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div 
+                        v-else 
+                        class="flex items-center cursor-pointer hover:bg-muted/50 p-1 rounded"
+                        @click="editingCellId = transaction.id"
+                      >
                         <div class="flex-shrink-0 mr-2">
                           <BanknotesIcon v-if="transaction.account" class="h-4 w-4 text-indigo-600" />
                           <CreditCardIcon v-else-if="transaction.credit_card" class="h-4 w-4 text-blue-600" />
@@ -351,7 +414,8 @@ import {
   BanknotesIcon,
   CreditCardIcon,
   ArrowUpTrayIcon,
-  ClockIcon
+  ClockIcon,
+  CheckIcon
 } from '@heroicons/vue/24/outline'
 import { Button } from '@/components/ui/button'
 import {
@@ -376,7 +440,9 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
@@ -401,6 +467,7 @@ const {
   transactionStats,
   loadTransactions,
   deleteTransaction: deleteTransactionApi,
+  bulkUpdateTransactions,
   applyTableFilters,
   applyTableSort,
   formatCurrency,
@@ -411,6 +478,7 @@ const {
 } = useTransactions()
 
 const { creditCards, initialize: initializeCreditCards } = useCreditCards()
+const { accounts, initialize: initializeAccounts } = useAccounts()
 
 // Local state
 const showCreateModal = ref(false)
@@ -418,6 +486,9 @@ const showEditModal = ref(false)
 const showImportModal = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const localFilters = ref<TransactionTableFilters>({})
+const pendingChanges = ref<Map<number, { account_id?: number | null, credit_card_id?: number | null }>>(new Map())
+const editingCellId = ref<number | null>(null)
+const savingChanges = ref(false)
 
 // Table columns configuration
 const tableColumns = [
@@ -431,6 +502,9 @@ const tableColumns = [
   { key: 'installments', label: 'Parcelas', sortable: false, width: '80px', align: 'center' },
   { key: 'actions', label: 'Ações', sortable: false, width: '100px', align: 'right' }
 ]
+
+// Computed
+const hasPendingChanges = computed(() => pendingChanges.value.size > 0)
 
 // Methods
 const handleSort = (key: string) => {
@@ -497,11 +571,95 @@ const handleImportComplete = async () => {
   await loadTransactions()
 }
 
+// Account/Credit Card editing methods
+const getCurrentAccountCardValue = (transaction: Transaction): string => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  const accountId = pendingChange?.account_id ?? transaction.account?.id ?? null
+  const creditCardId = pendingChange?.credit_card_id ?? transaction.credit_card?.id ?? null
+  
+  if (accountId !== null) {
+    return `account_${accountId}`
+  }
+  if (creditCardId !== null) {
+    return `credit_card_${creditCardId}`
+  }
+  return 'none'
+}
+
+const handleAccountCardChange = (transaction: Transaction, value: string) => {
+  const transactionId = transaction.id
+  
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transactionId)
+  const currentAccountId = pendingChange?.account_id ?? transaction.account?.id ?? null
+  const currentCreditCardId = pendingChange?.credit_card_id ?? transaction.credit_card?.id ?? null
+  
+  // Get original values from transaction
+  const originalAccountId = transaction.account?.id ?? null
+  const originalCreditCardId = transaction.credit_card?.id ?? null
+  
+  let newAccountId: number | null = null
+  let newCreditCardId: number | null = null
+  
+  if (value === 'none') {
+    newAccountId = null
+    newCreditCardId = null
+  } else if (value.startsWith('account_')) {
+    newAccountId = Number(value.replace('account_', ''))
+    newCreditCardId = null
+  } else if (value.startsWith('credit_card_')) {
+    newAccountId = null
+    newCreditCardId = Number(value.replace('credit_card_', ''))
+  }
+  
+  // Only track if value actually changed from original
+  if (newAccountId !== originalAccountId || newCreditCardId !== originalCreditCardId) {
+    pendingChanges.value.set(transactionId, {
+      account_id: newAccountId,
+      credit_card_id: newCreditCardId
+    })
+  } else {
+    // Remove from pending changes if reverted to original
+    pendingChanges.value.delete(transactionId)
+  }
+  
+  editingCellId.value = null
+}
+
+const handleSaveChanges = async () => {
+  if (pendingChanges.value.size === 0) return
+  
+  savingChanges.value = true
+  
+  try {
+    const updates = Array.from(pendingChanges.value.entries()).map(([id, changes]) => ({
+      id,
+      ...changes
+    }))
+    
+    const result = await bulkUpdateTransactions({ transactions: updates })
+    
+    if (result.success) {
+      pendingChanges.value.clear()
+      editingCellId.value = null
+      // Transactions will be automatically refreshed by the composable
+    } else {
+      alert('Erro ao salvar alterações: ' + (result.error?.message || 'Erro desconhecido'))
+    }
+  } catch (err: any) {
+    alert('Erro ao salvar alterações: ' + (err?.message || 'Erro desconhecido'))
+  } finally {
+    savingChanges.value = false
+  }
+}
+
 // Initialize data
 onMounted(async () => {
   await Promise.all([
     initialize(),
-    initializeCreditCards()
+    initializeCreditCards(),
+    initializeAccounts()
   ])
 })
 </script> 

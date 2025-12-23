@@ -283,4 +283,29 @@ export interface TransactionTableFilters {
   date_to?: string
   amount_min?: string
   amount_max?: string
+}
+
+/**
+ * Bulk transaction update interface for individual transaction updates
+ */
+export interface BulkTransactionUpdate {
+  id: number
+  account_id?: number | null
+  credit_card_id?: number | null
+  transaction_type?: TransactionType
+  amount?: string
+  description?: string | null
+  occurred_at?: string
+  category_id?: number | null
+  subcategory_id?: number | null
+  tag_ids?: number[]
+  installments_total?: number
+  installment_number?: number
+}
+
+/**
+ * Bulk transaction update request interface
+ */
+export interface BulkTransactionUpdateRequest {
+  transactions: BulkTransactionUpdate[]
 } 

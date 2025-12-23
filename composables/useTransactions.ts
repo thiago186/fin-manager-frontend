@@ -6,7 +6,8 @@ import type {
   UpdateTransactionRequest,
   TransactionApiResult,
   TransactionTableFilters,
-  TransactionTableSort
+  TransactionTableSort,
+  BulkTransactionUpdateRequest
 } from '~/types/transactions'
 
 export const useTransactions = () => {
@@ -145,6 +146,36 @@ export const useTransactions = () => {
       const errorMessage = err?.data?.message || 'Failed to delete transaction'
       error.value = errorMessage
       console.error('Error deleting transaction:', err)
+      return { 
+        success: false, 
+        error: { message: errorMessage, code: err?.status?.toString() } 
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Bulk update transactions
+  const bulkUpdateTransactions = async (updateRequest: BulkTransactionUpdateRequest): Promise<TransactionApiResult<Transaction[]>> => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await $fetch<{ results: Transaction[] }>('/finance/transactions/bulk-update/', {
+        baseURL: config.public.apiBase,
+        method: 'PATCH',
+        body: updateRequest,
+        credentials: 'include'
+      })
+
+      // Refresh transactions after bulk update
+      await loadTransactions()
+      
+      return { success: true, data: response.results }
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || err?.data?.detail || 'Failed to bulk update transactions'
+      error.value = errorMessage
+      console.error('Error bulk updating transactions:', err)
       return { 
         success: false, 
         error: { message: errorMessage, code: err?.status?.toString() } 
@@ -401,6 +432,7 @@ export const useTransactions = () => {
     createTransaction,
     updateTransaction,
     deleteTransaction,
+    bulkUpdateTransactions,
     getTransaction,
     formatTransactionData,
     applyTableFilters,
