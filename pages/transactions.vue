@@ -270,8 +270,43 @@
                     <TableCell class="whitespace-nowrap text-sm text-gray-900">
                       {{ transaction.category?.name || '-' }}
                     </TableCell>
-                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                      {{ transaction.subcategory?.name || '-' }}
+                    <TableCell 
+                      class="whitespace-nowrap text-sm text-gray-900"
+                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
+                    >
+                      <Select 
+                        :model-value="getCurrentSubcategoryValue(transaction)"
+                        @update:model-value="(value) => handleSubcategoryChange(transaction, value as string)"
+                        @open-change="(open: boolean) => { 
+                          if (open) {
+                            editingSubcategoryCellId = transaction.id
+                          } else {
+                            editingSubcategoryCellId = null
+                          }
+                        }"
+                      >
+                        <SelectTrigger 
+                          class="w-full border-none shadow-none hover:bg-muted/50 p-1 h-auto data-[state=open]:bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
+                          :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
+                        >
+                          <SelectValue class="text-sm text-gray-900">
+                            {{ getDisplaySubcategoryName(transaction) }}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectGroup v-if="getAvailableSubcategories(transaction).length > 0">
+                            <SelectLabel>Subcategorias</SelectLabel>
+                            <SelectItem
+                              v-for="subcategory in getAvailableSubcategories(transaction)"
+                              :key="subcategory.id"
+                              :value="`subcategory_${subcategory.id}`"
+                            >
+                              {{ subcategory.name }}
+                            </SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell 
                       class="whitespace-nowrap text-sm text-gray-900"
@@ -489,6 +524,7 @@ const {
 
 const { creditCards, initialize: initializeCreditCards } = useCreditCards()
 const { accounts, initialize: initializeAccounts } = useAccounts()
+const { subcategories, loadSubcategories } = useSubcategories()
 
 // Local state
 const showCreateModal = ref(false)
@@ -496,8 +532,9 @@ const showEditModal = ref(false)
 const showImportModal = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const localFilters = ref<TransactionTableFilters>({})
-const pendingChanges = ref<Map<number, { account_id?: number | null, credit_card_id?: number | null }>>(new Map())
+const pendingChanges = ref<Map<number, { account_id?: number | null, credit_card_id?: number | null, subcategory_id?: number | null }>>(new Map())
 const editingCellId = ref<number | null>(null)
+const editingSubcategoryCellId = ref<number | null>(null)
 const savingChanges = ref(false)
 
 // Table columns configuration
@@ -601,6 +638,7 @@ const getDisplayAccountCardName = (transaction: Transaction): string => {
   // Get effective current values (pending change or original)
   const pendingChange = pendingChanges.value.get(transaction.id)
   
+  // Check if there's a pending change for account/credit card
   if (pendingChange) {
     if (pendingChange.account_id !== null && pendingChange.account_id !== undefined) {
       const account = accounts.value.find(a => a.id === pendingChange.account_id)
@@ -610,7 +648,7 @@ const getDisplayAccountCardName = (transaction: Transaction): string => {
       const creditCard = creditCards.value.find(c => c.id === pendingChange.credit_card_id)
       return creditCard?.name || '-'
     }
-    return '-'
+    // If pending change exists but doesn't have account/credit card changes, fall back to original
   }
   
   // Show original value
@@ -621,6 +659,7 @@ const getDisplayAccountCardIcon = (transaction: Transaction) => {
   // Get effective current values (pending change or original)
   const pendingChange = pendingChanges.value.get(transaction.id)
   
+  // Check if there's a pending change for account/credit card
   if (pendingChange) {
     if (pendingChange.account_id !== null && pendingChange.account_id !== undefined) {
       return 'account'
@@ -628,13 +667,94 @@ const getDisplayAccountCardIcon = (transaction: Transaction) => {
     if (pendingChange.credit_card_id !== null && pendingChange.credit_card_id !== undefined) {
       return 'credit_card'
     }
-    return null
+    // If pending change exists but doesn't have account/credit card changes, fall back to original
   }
   
   // Show original value
   if (transaction.account) return 'account'
   if (transaction.credit_card) return 'credit_card'
   return null
+}
+
+// Subcategory editing methods
+const getCurrentSubcategoryValue = (transaction: Transaction): string => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  const subcategoryId = pendingChange?.subcategory_id ?? transaction.subcategory?.id ?? null
+  
+  if (subcategoryId !== null) {
+    return `subcategory_${subcategoryId}`
+  }
+  return 'none'
+}
+
+const getDisplaySubcategoryName = (transaction: Transaction): string => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  
+  if (pendingChange?.subcategory_id !== null && pendingChange?.subcategory_id !== undefined) {
+    const subcategory = subcategories.value.find(s => s.id === pendingChange.subcategory_id)
+    return subcategory?.name || '-'
+  }
+  
+  // Show original value
+  return transaction.subcategory?.name || '-'
+}
+
+const getAvailableSubcategories = (transaction: Transaction) => {
+  // Get effective category ID (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  const categoryId = transaction.category?.id ?? null
+  
+  if (!categoryId) {
+    return []
+  }
+  
+  // Filter subcategories by category
+  return subcategories.value.filter(subcategory => subcategory.category === categoryId)
+}
+
+const handleSubcategoryChange = (transaction: Transaction, value: string) => {
+  const transactionId = transaction.id
+  
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  const currentSubcategoryId = pendingChange?.subcategory_id ?? transaction.subcategory?.id ?? null
+  
+  // Get original value from transaction
+  const originalSubcategoryId = transaction.subcategory?.id ?? null
+  
+  let newSubcategoryId: number | null = null
+  
+  if (value === 'none') {
+    newSubcategoryId = null
+  } else if (value.startsWith('subcategory_')) {
+    newSubcategoryId = Number(value.replace('subcategory_', ''))
+  }
+  
+  // Get existing pending changes or create new
+  const existingChanges = pendingChanges.value.get(transactionId) || {}
+  
+  // Only track if value actually changed from original
+  if (newSubcategoryId !== originalSubcategoryId) {
+    pendingChanges.value.set(transactionId, {
+      ...existingChanges,
+      subcategory_id: newSubcategoryId
+    })
+  } else {
+    // Remove subcategory_id from pending changes if reverted to original
+    const updatedChanges = { ...existingChanges }
+    delete updatedChanges.subcategory_id
+    
+    // If there are no other changes, remove the entry entirely
+    if (Object.keys(updatedChanges).length === 0) {
+      pendingChanges.value.delete(transactionId)
+    } else {
+      pendingChanges.value.set(transactionId, updatedChanges)
+    }
+  }
+  
+  editingSubcategoryCellId.value = null
 }
 
 const handleAccountCardChange = (transaction: Transaction, value: string) => {
@@ -663,15 +783,28 @@ const handleAccountCardChange = (transaction: Transaction, value: string) => {
     newCreditCardId = Number(value.replace('credit_card_', ''))
   }
   
+  // Get existing pending changes or create new
+  const existingChanges = pendingChanges.value.get(transactionId) || {}
+  
   // Only track if value actually changed from original
   if (newAccountId !== originalAccountId || newCreditCardId !== originalCreditCardId) {
     pendingChanges.value.set(transactionId, {
+      ...existingChanges,
       account_id: newAccountId,
       credit_card_id: newCreditCardId
     })
   } else {
-    // Remove from pending changes if reverted to original
-    pendingChanges.value.delete(transactionId)
+    // Remove account_id and credit_card_id from pending changes if reverted to original
+    const updatedChanges = { ...existingChanges }
+    delete updatedChanges.account_id
+    delete updatedChanges.credit_card_id
+    
+    // If there are no other changes, remove the entry entirely
+    if (Object.keys(updatedChanges).length === 0) {
+      pendingChanges.value.delete(transactionId)
+    } else {
+      pendingChanges.value.set(transactionId, updatedChanges)
+    }
   }
   
   editingCellId.value = null
@@ -693,6 +826,7 @@ const handleSaveChanges = async () => {
     if (result.success) {
       pendingChanges.value.clear()
       editingCellId.value = null
+      editingSubcategoryCellId.value = null
       // Transactions will be automatically refreshed by the composable
     } else {
       alert('Erro ao salvar alterações: ' + (result.error?.message || 'Erro desconhecido'))
@@ -709,7 +843,8 @@ onMounted(async () => {
   await Promise.all([
     initialize(),
     initializeCreditCards(),
-    initializeAccounts()
+    initializeAccounts(),
+    loadSubcategories()
   ])
 })
 </script> 
