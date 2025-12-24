@@ -264,18 +264,20 @@
                       class="px-4 py-4 whitespace-nowrap text-right text-sm"
                       :class="[
                         row.type === 'result' ? 'font-semibold' : '',
+                        isZeroValue(row.monthly_totals[String(month)] || '0') ? 'text-gray-400' : 
                         parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
                       ]"
                     >
-                      {{ formatCurrency(row.monthly_totals[String(month)] || '0') }}
+                      {{ formatValue(row.monthly_totals[String(month)] || '0') }}
                     </td>
                     <td
                       class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                       :class="[
+                        isZeroValue(row.annual_total || '0') ? 'text-gray-400' : 
                         parseFloat(row.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
                       ]"
                     >
-                      {{ formatCurrency(row.annual_total || '0.00') }}
+                      {{ formatValue(row.annual_total || '0.00') }}
                     </td>
                   </tr>
                 </tbody>
@@ -432,6 +434,18 @@ const tableRows = computed<TableRow[]>(() => {
 // Methods
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('pt-BR')
+}
+
+const isZeroValue = (value: string): boolean => {
+  const numValue = parseFloat(value)
+  return isNaN(numValue) || numValue === 0
+}
+
+const formatValue = (value: string): string => {
+  if (isZeroValue(value)) {
+    return '-'
+  }
+  return formatCurrency(value)
 }
 
 const selectView = async (viewId: number) => {
