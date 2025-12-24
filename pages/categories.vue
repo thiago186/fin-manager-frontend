@@ -8,12 +8,15 @@
           <h1 class="text-3xl font-bold text-gray-900">Categories</h1>
           <p class="mt-1 text-sm text-gray-500">Manage your income and expense categories</p>
         </div>
-        <Button @click="showCreateCategoryModal = true">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Add Category
-        </Button>
+        <ButtonGroup>
+          <Button @click="openCreateCategoryModal('income')">
+            Receita
+          </Button>
+          <ButtonGroupSeparator />
+          <Button @click="openCreateCategoryModal('expense')">
+            Despesa
+          </Button>
+        </ButtonGroup>
       </div>
 
       <!-- Filters -->
@@ -100,9 +103,15 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No categories found</h3>
         <p class="mt-1 text-sm text-gray-500">Get started by creating a new category.</p>
         <div class="mt-6">
-          <Button @click="showCreateCategoryModal = true">
-            Add Category
-          </Button>
+          <ButtonGroup>
+            <Button @click="openCreateCategoryModal('income')">
+              Receita
+            </Button>
+            <ButtonGroupSeparator />
+            <Button @click="openCreateCategoryModal('expense')">
+              Despesa
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
     </div>
@@ -375,6 +384,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group'
 
 // Define page metadata
 definePageMeta({
@@ -444,6 +454,16 @@ const subcategoryForm = ref({
 })
 
 // Methods
+const openCreateCategoryModal = (transactionType) => {
+  categoryForm.value = {
+    name: '',
+    transaction_type: transactionType,
+    description: '',
+    is_active: true
+  }
+  showCreateCategoryModal.value = true
+}
+
 const handleLoadCategories = async () => {
   const filtersData = {
     transaction_type: categoryFilters.value.transaction_type || null
