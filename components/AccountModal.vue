@@ -20,7 +20,7 @@
         </div>
 
         <div class="space-y-2">
-          <Label>Saldo Atual *</Label>
+          <Label>Saldo Atual *</Label>T
           <div class="relative">
             <span class="absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">R$</span>
             <Input

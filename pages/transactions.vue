@@ -267,9 +267,6 @@
                         {{ transaction.description || 'Sem descrição' }}
                       </div>
                     </TableCell>
-                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
-                      {{ transaction.category?.name || '-' }}
-                    </TableCell>
                     <TableCell 
                       class="whitespace-nowrap text-sm text-gray-900"
                       :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
@@ -295,16 +292,18 @@
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Nenhum</SelectItem>
-                          <SelectGroup v-if="getAvailableSubcategories(transaction).length > 0">
-                            <SelectLabel>Subcategorias</SelectLabel>
-                            <SelectItem
-                              v-for="subcategory in getAvailableSubcategories(transaction)"
-                              :key="subcategory.id"
-                              :value="`subcategory_${subcategory.id}`"
-                            >
-                              {{ subcategory.name }}
-                            </SelectItem>
-                          </SelectGroup>
+                          <template v-for="group in getSubcategoriesGroupedByCategory(transaction)" :key="group.categoryId">
+                            <SelectGroup>
+                              <SelectLabel>{{ group.categoryName }}</SelectLabel>
+                              <SelectItem
+                                v-for="subcategory in group.subcategories"
+                                :key="subcategory.id"
+                                :value="`subcategory_${subcategory.id}`"
+                              >
+                                {{ subcategory.name }}
+                              </SelectItem>
+                            </SelectGroup>
+                          </template>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -525,6 +524,7 @@ const {
 const { creditCards, initialize: initializeCreditCards } = useCreditCards()
 const { accounts, initialize: initializeAccounts } = useAccounts()
 const { subcategories, loadSubcategories } = useSubcategories()
+const { categories, initialize: initializeCategories } = useCategories()
 
 // Local state
 const showCreateModal = ref(false)
@@ -532,7 +532,7 @@ const showEditModal = ref(false)
 const showImportModal = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const localFilters = ref<TransactionTableFilters>({})
-const pendingChanges = ref<Map<number, { account_id?: number | null, credit_card_id?: number | null, subcategory_id?: number | null }>>(new Map())
+const pendingChanges = ref<Map<number, { account_id?: number | null, credit_card_id?: number | null, category_id?: number | null, subcategory_id?: number | null }>>(new Map())
 const editingCellId = ref<number | null>(null)
 const editingSubcategoryCellId = ref<number | null>(null)
 const savingChanges = ref(false)
@@ -542,7 +542,6 @@ const tableColumns = [
   { key: 'occurred_at', label: 'Data', sortable: true, width: '120px' },
   { key: 'transaction_type', label: 'Tipo', sortable: true, width: '100px' },
   { key: 'description', label: 'Descrição', sortable: false, width: '200px' },
-  { key: 'category', label: 'Categoria', sortable: false, width: '120px' },
   { key: 'subcategory', label: 'Subcategoria', sortable: false, width: '120px' },
   { key: 'account', label: 'Conta/Cartão', sortable: false, width: '150px' },
   { key: 'amount', label: 'Valor', sortable: true, width: '120px', align: 'right' },
@@ -702,16 +701,53 @@ const getDisplaySubcategoryName = (transaction: Transaction): string => {
 }
 
 const getAvailableSubcategories = (transaction: Transaction) => {
-  // Get effective category ID (pending change or original)
-  const pendingChange = pendingChanges.value.get(transaction.id)
-  const categoryId = transaction.category?.id ?? null
-  
-  if (!categoryId) {
+  if (!subcategories.value || subcategories.value.length === 0) {
     return []
   }
   
-  // Filter subcategories by category
-  return subcategories.value.filter(subcategory => subcategory.category === categoryId)
+  // Map transaction type to subcategory transaction type
+  // Transaction: 'INCOME' | 'EXPENSE' | 'TRANSFER'
+  // Subcategory: 'income' | 'expense'
+  const transactionTypeMap: Record<string, 'income' | 'expense' | null> = {
+    'INCOME': 'income',
+    'EXPENSE': 'expense',
+    'TRANSFER': null // Transfers might not have subcategories
+  }
+  
+  const subcategoryTransactionType = transactionTypeMap[transaction.transaction_type] ?? null
+  
+  // Filter subcategories by transaction type and active status only
+  return subcategories.value.filter(subcategory => {
+    const matchesTransactionType = subcategoryTransactionType === null || subcategory.transaction_type === subcategoryTransactionType
+    const isActive = subcategory.is_active
+    return matchesTransactionType && isActive
+  })
+}
+
+const getSubcategoriesGroupedByCategory = (transaction: Transaction) => {
+  const availableSubcategories = getAvailableSubcategories(transaction)
+  
+  // Group subcategories by their parent category
+  const grouped = new Map<number, { categoryName: string, subcategories: typeof availableSubcategories }>()
+  
+  availableSubcategories.forEach(subcategory => {
+    const categoryId = Number(subcategory.category)
+    const category = categories.value.find(c => c.id === categoryId)
+    
+    if (!grouped.has(categoryId)) {
+      grouped.set(categoryId, {
+        categoryName: category?.name || 'Sem categoria',
+        subcategories: []
+      })
+    }
+    
+    grouped.get(categoryId)!.subcategories.push(subcategory)
+  })
+  
+  // Convert map to array sorted by category name
+  return Array.from(grouped.entries())
+    .map(([categoryId, data]) => ({ categoryId, ...data }))
+    .sort((a, b) => a.categoryName.localeCompare(b.categoryName))
 }
 
 const handleSubcategoryChange = (transaction: Transaction, value: string) => {
@@ -719,32 +755,48 @@ const handleSubcategoryChange = (transaction: Transaction, value: string) => {
   
   // Get effective current values (pending change or original)
   const pendingChange = pendingChanges.value.get(transaction.id)
-  const currentSubcategoryId = pendingChange?.subcategory_id ?? transaction.subcategory?.id ?? null
   
-  // Get original value from transaction
+  // Get original values from transaction
   const originalSubcategoryId = transaction.subcategory?.id ?? null
+  const originalCategoryId = transaction.category?.id ?? null
   
   let newSubcategoryId: number | null = null
+  let newCategoryId: number | null = null
   
   if (value === 'none') {
     newSubcategoryId = null
+    newCategoryId = null
   } else if (value.startsWith('subcategory_')) {
     newSubcategoryId = Number(value.replace('subcategory_', ''))
+    
+    // Find the selected subcategory to get its parent category
+    const selectedSubcategory = subcategories.value.find(s => s.id === newSubcategoryId)
+    if (selectedSubcategory) {
+      newCategoryId = Number(selectedSubcategory.category)
+    }
   }
   
   // Get existing pending changes or create new
   const existingChanges = pendingChanges.value.get(transactionId) || {}
   
-  // Only track if value actually changed from original
-  if (newSubcategoryId !== originalSubcategoryId) {
-    pendingChanges.value.set(transactionId, {
+  // Check if values actually changed from original
+  const subcategoryChanged = newSubcategoryId !== originalSubcategoryId
+  const categoryChanged = newCategoryId !== originalCategoryId
+  
+  if (subcategoryChanged || categoryChanged) {
+    // Update both subcategory_id and category_id
+    const updatedChanges: { account_id?: number | null, credit_card_id?: number | null, category_id?: number | null, subcategory_id?: number | null } = {
       ...existingChanges,
-      subcategory_id: newSubcategoryId
-    })
+      subcategory_id: newSubcategoryId,
+      category_id: newCategoryId
+    }
+    
+    pendingChanges.value.set(transactionId, updatedChanges)
   } else {
-    // Remove subcategory_id from pending changes if reverted to original
+    // Remove subcategory_id and category_id from pending changes if reverted to original
     const updatedChanges = { ...existingChanges }
     delete updatedChanges.subcategory_id
+    delete updatedChanges.category_id
     
     // If there are no other changes, remove the entry entirely
     if (Object.keys(updatedChanges).length === 0) {
@@ -844,6 +896,7 @@ onMounted(async () => {
     initialize(),
     initializeCreditCards(),
     initializeAccounts(),
+    initializeCategories(),
     loadSubcategories()
   ])
 })
