@@ -116,13 +116,34 @@ export interface MonthlyTotals {
 }
 
 /**
+ * Subcategory in a cash flow report
+ */
+export interface CashFlowReportSubcategory {
+  id: number
+  name: string
+  monthly_totals: MonthlyTotals
+  annual_total: string
+}
+
+/**
+ * Category in a cash flow report (includes subcategories)
+ */
+export interface CashFlowReportCategory {
+  id: number
+  name: string
+  monthly_totals: MonthlyTotals
+  annual_total: string
+  subcategories: CashFlowReportSubcategory[]
+}
+
+/**
  * Report item for a group
  */
 export interface CashFlowReportGroupItem {
   type: 'group'
   name: string
   position: number
-  categories: CashFlowGroupCategory[]
+  categories: CashFlowReportCategory[]
   monthly_totals: MonthlyTotals
   annual_total: string
 }

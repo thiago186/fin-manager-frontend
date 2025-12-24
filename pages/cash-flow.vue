@@ -188,19 +188,74 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr
-                    v-for="item in sortedReportItems"
-                    :key="`${item.type}-${item.position}`"
+                    v-for="row in tableRows"
+                    :key="row.id"
                     :class="[
-                      item.type === 'result' ? 'bg-gray-50 font-semibold' : '',
-                      item.type === 'group' && item.position % 2 === 0 ? 'bg-gray-25' : ''
+                      row.type === 'result' ? 'bg-gray-50 font-semibold' : '',
+                      row.type === 'group' && row.position % 2 === 0 ? 'bg-gray-25' : '',
+                      row.type === 'group' && row.isExpandable ? 'hover:bg-gray-50 cursor-pointer' : '',
+                      row.type === 'category' ? 'hover:bg-gray-50' : '',
+                      row.type === 'subcategory' ? 'bg-gray-25' : ''
                     ]"
                   >
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
-                        {{ item.name }}
-                      </div>
-                      <div v-if="item.type === 'group' && 'categories' in item && item.categories.length > 0" class="text-xs text-gray-500 mt-1">
-                        {{ item.categories.map(c => c.name).join(', ') }}
+                    <td 
+                      class="px-6 py-4 whitespace-nowrap"
+                      :class="[
+                        row.type === 'category' ? 'pl-8' : '',
+                        row.type === 'subcategory' ? 'pl-16' : ''
+                      ]"
+                    >
+                      <div class="flex items-center">
+                        <!-- Group expand/collapse button -->
+                        <button
+                          v-if="row.type === 'group' && row.isExpandable"
+                          @click.stop="toggleGroup(row.position)"
+                          class="mr-2 flex-shrink-0 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                          type="button"
+                        >
+                          <ChevronDownIcon
+                            v-if="row.isExpanded"
+                            class="h-4 w-4"
+                          />
+                          <ChevronRightIcon
+                            v-else
+                            class="h-4 w-4"
+                          />
+                        </button>
+                        <div 
+                          v-else-if="row.type === 'group' && !row.isExpandable"
+                          class="mr-6 w-4"
+                        ></div>
+                        <!-- Category expand/collapse button -->
+                        <button
+                          v-if="row.type === 'category' && row.isExpandable"
+                          @click.stop="toggleCategory(row.categoryId!)"
+                          class="mr-2 flex-shrink-0 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                          type="button"
+                        >
+                          <ChevronDownIcon
+                            v-if="row.isExpanded"
+                            class="h-4 w-4"
+                          />
+                          <ChevronRightIcon
+                            v-else
+                            class="h-4 w-4"
+                          />
+                        </button>
+                        <div 
+                          v-else-if="row.type === 'category' && !row.isExpandable"
+                          class="mr-6 w-4"
+                        ></div>
+                        <div 
+                          :class="[
+                            'text-sm',
+                            row.type === 'group' || row.type === 'result' ? 'font-medium text-gray-900' : '',
+                            row.type === 'category' ? 'font-medium text-gray-900' : '',
+                            row.type === 'subcategory' ? 'text-gray-700' : ''
+                          ]"
+                        >
+                          {{ row.name }}
+                        </div>
                       </div>
                     </td>
                     <td
@@ -208,19 +263,19 @@
                       :key="month"
                       class="px-4 py-4 whitespace-nowrap text-right text-sm"
                       :class="[
-                        item.type === 'result' ? 'font-semibold' : '',
-                        parseFloat(item.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                        row.type === 'result' ? 'font-semibold' : '',
+                        parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
                       ]"
                     >
-                      {{ formatCurrency(item.monthly_totals[String(month)] || '0') }}
+                      {{ formatCurrency(row.monthly_totals[String(month)] || '0') }}
                     </td>
                     <td
                       class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                       :class="[
-                        parseFloat(item.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                        parseFloat(row.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
                       ]"
                     >
-                      {{ formatCurrency(item.annual_total || '0.00') }}
+                      {{ formatCurrency(row.annual_total || '0.00') }}
                     </td>
                   </tr>
                 </tbody>
@@ -239,12 +294,14 @@ import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   PlusIcon,
   ChartBarIcon,
   FolderIcon,
   CalculatorIcon
 } from '@heroicons/vue/24/outline'
-import type { CashFlowReportItem } from '~/types/cashFlowViews'
+import type { CashFlowReportItem, CashFlowReportGroupItem } from '~/types/cashFlowViews'
 
 // Page metadata
 definePageMeta({
@@ -269,6 +326,8 @@ const {
 const selectedViewId = ref<number | null>(null)
 const selectedViewName = ref<string>('')
 const selectedYear = ref(new Date().getFullYear())
+const expandedGroups = ref<Set<number>>(new Set())
+const expandedCategories = ref<Set<number>>(new Set())
 
 // Computed
 const availableYears = computed(() => {
@@ -280,9 +339,94 @@ const availableYears = computed(() => {
   return years
 })
 
-const sortedReportItems = computed<CashFlowReportItem[]>(() => {
+// Flattened table rows including categories and subcategories
+interface TableRow {
+  type: 'group' | 'category' | 'subcategory' | 'result'
+  id: string
+  name: string
+  monthly_totals: { [key: string]: string }
+  annual_total: string
+  position: number
+  groupPosition?: number
+  categoryId?: number
+  isExpandable?: boolean
+  isExpanded?: boolean
+}
+
+const tableRows = computed<TableRow[]>(() => {
   if (!currentReport.value) return []
-  return [...currentReport.value.items].sort((a, b) => a.position - b.position)
+  
+  const rows: TableRow[] = []
+  const items = [...currentReport.value.items].sort((a, b) => a.position - b.position)
+  
+  for (const item of items) {
+    if (item.type === 'group') {
+      const groupItem = item as CashFlowReportGroupItem
+      const isGroupExpanded = expandedGroups.value.has(item.position)
+      const hasCategories = groupItem.categories && groupItem.categories.length > 0
+      
+      // Add group row
+      rows.push({
+        type: 'group',
+        id: `group-${item.position}`,
+        name: item.name,
+        monthly_totals: { ...item.monthly_totals },
+        annual_total: item.annual_total,
+        position: item.position,
+        isExpandable: hasCategories,
+        isExpanded: isGroupExpanded
+      })
+      
+      // Add category rows for this group only if group is expanded
+      if (isGroupExpanded && hasCategories) {
+        for (const category of groupItem.categories) {
+          const hasSubcategories = category.subcategories && category.subcategories.length > 0
+          const isCategoryExpanded = expandedCategories.value.has(category.id)
+          
+          rows.push({
+            type: 'category',
+            id: `category-${category.id}`,
+            name: category.name,
+            monthly_totals: { ...category.monthly_totals },
+            annual_total: category.annual_total,
+            position: item.position,
+            groupPosition: item.position,
+            categoryId: category.id,
+            isExpandable: hasSubcategories,
+            isExpanded: isCategoryExpanded
+          })
+          
+          // Add subcategory rows if category is expanded
+          if (isCategoryExpanded && hasSubcategories) {
+            for (const subcategory of category.subcategories) {
+              rows.push({
+                type: 'subcategory',
+                id: `subcategory-${category.id}-${subcategory.id}`,
+                name: subcategory.name,
+                monthly_totals: { ...subcategory.monthly_totals },
+                annual_total: subcategory.annual_total,
+                position: item.position,
+                groupPosition: item.position,
+                categoryId: category.id
+              })
+            }
+          }
+        }
+      }
+    } else if (item.type === 'result') {
+      // Add result row
+      rows.push({
+        type: 'result',
+        id: `result-${item.position}`,
+        name: item.name,
+        monthly_totals: { ...item.monthly_totals },
+        annual_total: item.annual_total,
+        position: item.position
+      })
+    }
+  }
+  
+  return rows
 })
 
 // Methods
@@ -301,7 +445,39 @@ const selectView = async (viewId: number) => {
 
 const loadReport = async () => {
   if (selectedViewId.value) {
+    // Clear expanded groups and categories when loading a new report
+    expandedGroups.value.clear()
+    expandedCategories.value.clear()
     await getCashFlowReport(selectedViewId.value, selectedYear.value)
+    
+    // Expand all groups by default to show categories
+    if (currentReport.value) {
+      const items = [...currentReport.value.items].sort((a, b) => a.position - b.position)
+      for (const item of items) {
+        if (item.type === 'group') {
+          const groupItem = item as CashFlowReportGroupItem
+          if (groupItem.categories && groupItem.categories.length > 0) {
+            expandedGroups.value.add(item.position)
+          }
+        }
+      }
+    }
+  }
+}
+
+const toggleGroup = (groupPosition: number) => {
+  if (expandedGroups.value.has(groupPosition)) {
+    expandedGroups.value.delete(groupPosition)
+  } else {
+    expandedGroups.value.add(groupPosition)
+  }
+}
+
+const toggleCategory = (categoryId: number) => {
+  if (expandedCategories.value.has(categoryId)) {
+    expandedCategories.value.delete(categoryId)
+  } else {
+    expandedCategories.value.add(categoryId)
   }
 }
 
