@@ -305,7 +305,9 @@ const handleUpload = async () => {
 
   // Parse selected account or card
   const isAccount = selectedAccountOrCard.value.startsWith('account-')
-  const id = parseInt(selectedAccountOrCard.value.split('-')[1])
+  // Extract ID from either "account-123" or "credit-card-123" format
+  const parts = selectedAccountOrCard.value.split('-')
+  const id = parseInt(parts[parts.length - 1])
 
   const uploadOptions = isAccount
     ? { account_id: id }
