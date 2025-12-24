@@ -106,6 +106,7 @@ export const useCashFlowViews = () => {
     error.value = null
     
     try {
+      console.log('Creating cash flow view - Payload:', JSON.stringify(viewData, null, 2))
       const response = await $fetch<CashFlowView>('/finance/cash-flow-views/', {
         baseURL: config.public.apiBase,
         method: 'POST',

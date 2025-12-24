@@ -15,13 +15,13 @@
           </p>
         </div>
         <div v-if="!selectedViewId" class="flex space-x-3">
-          <NuxtLink
-            to="/cash-flow/create"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          <button
+            disabled
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 opacity-50 cursor-not-allowed"
           >
             <PlusIcon class="h-4 w-4 mr-2" />
             Nova Visualização
-          </NuxtLink>
+          </button>
         </div>
       </div>
     </div>
@@ -62,13 +62,13 @@
             Crie sua primeira visualização de fluxo de caixa para começar.
           </p>
           <div class="mt-6">
-            <NuxtLink
-              to="/cash-flow/create"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            <button
+              disabled
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 opacity-50 cursor-not-allowed"
             >
               <PlusIcon class="h-4 w-4 mr-2" />
               Criar Visualização
-            </NuxtLink>
+            </button>
           </div>
         </div>
 
