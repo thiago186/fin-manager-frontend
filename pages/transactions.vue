@@ -20,10 +20,15 @@
             <ArrowUpTrayIcon class="h-4 w-4 mr-2" />
             Importar CSV/JSON
           </Button>
-          <Button @click="showCreateModal = true">
-            <PlusIcon class="h-4 w-4 mr-2" />
-            Nova Transação
-          </Button>
+          <ButtonGroup>
+            <Button @click="openCreateTransactionModal('INCOME')">
+              Receita
+            </Button>
+            <ButtonGroupSeparator />
+            <Button @click="openCreateTransactionModal('EXPENSE')">
+              Despesa
+            </Button>
+          </ButtonGroup>
         </div>
       </div>
     </div>
@@ -404,10 +409,15 @@
                       Comece criando sua primeira transação.
                     </p>
                     <div class="mt-6">
-                      <Button @click="showCreateModal = true">
-                        <PlusIcon class="h-4 w-4 mr-2" />
-                        Nova Transação
-                      </Button>
+                      <ButtonGroup>
+                        <Button @click="openCreateTransactionModal('INCOME')">
+                          Receita
+                        </Button>
+                        <ButtonGroupSeparator />
+                        <Button @click="openCreateTransactionModal('EXPENSE')">
+                          Despesa
+                        </Button>
+                      </ButtonGroup>
                     </div>
                   </div>
                 </TableEmpty>
@@ -487,6 +497,7 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group'
 
 import type { Transaction, TransactionTableFilters, TransactionTableSort } from '~/types/transactions'
 
@@ -549,6 +560,28 @@ const tableColumns = [
 const hasPendingChanges = computed(() => pendingChanges.value.size > 0)
 
 // Methods
+const openCreateTransactionModal = (transactionType: 'INCOME' | 'EXPENSE') => {
+  editingTransaction.value = {
+    id: 0,
+    user: 0,
+    transaction_type: transactionType,
+    amount: '0',
+    description: '',
+    occurred_at: new Date().toISOString().split('T')[0],
+    installments_total: 1,
+    installment_number: 1,
+    installment_group_id: null,
+    account: null,
+    credit_card: null,
+    category: null,
+    subcategory: null,
+    tags: [],
+    created_at: '',
+    updated_at: ''
+  } as Transaction
+  showCreateModal.value = true
+}
+
 const handleSort = (key: string) => {
   const newDirection = sort.value.key === key && sort.value.direction === 'asc' ? 'desc' : 'asc'
   applyTableSort({ key: key as keyof Transaction, direction: newDirection })

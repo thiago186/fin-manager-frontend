@@ -362,8 +362,9 @@ const initializeForm = async () => {
       handleSubcategoryChange()
     }
   } else {
+    // When creating, use transaction_type from transaction prop if provided
     form.value = {
-      transaction_type: '',
+      transaction_type: props.transaction?.transaction_type || '',
       amount: '',
       description: '',
       occurred_at: new Date().toISOString().split('T')[0],
