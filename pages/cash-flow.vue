@@ -4,12 +4,17 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Fluxo de Caixa</h1>
-          <p class="mt-1 text-sm text-gray-500">
+          <h1 class="text-3xl font-bold text-gray-900">
+            {{ selectedViewId && currentReport ? currentReport.view_name : 'Fluxo de Caixa' }}
+          </h1>
+          <p v-if="!selectedViewId" class="mt-1 text-sm text-gray-500">
             Visualize seus relatórios financeiros personalizados
           </p>
+          <p v-else-if="currentReport" class="mt-1 text-sm text-gray-500">
+            Relatório anual para {{ selectedYear }}
+          </p>
         </div>
-        <div class="flex space-x-3">
+        <div v-if="!selectedViewId" class="flex space-x-3">
           <NuxtLink
             to="/cash-flow/create"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -155,16 +160,6 @@
 
         <!-- Report Dashboard -->
         <div v-else-if="currentReport" class="space-y-6">
-          <!-- Report Header -->
-          <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">
-              {{ currentReport.view_name }}
-            </h2>
-            <p class="text-sm text-gray-500">
-              Relatório anual para {{ selectedYear }}
-            </p>
-          </div>
-
           <!-- Report Table -->
           <div class="bg-white shadow rounded-lg overflow-hidden">
             <div class="overflow-x-auto">
