@@ -130,7 +130,7 @@ export const useImportReports = () => {
         formData.append('credit_card_id', String(options.credit_card_id))
       }
 
-      const response = await $fetch<CSVUploadResponse>('/finance/transactions/import-json/', {
+      const response = await $fetch<CSVUploadResponse>('/finance/transactions/import-csv/', {
         baseURL: config.public.apiBase,
         method: 'POST',
         body: formData,
