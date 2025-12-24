@@ -216,7 +216,7 @@
     </div>
 
     <!-- Create/Edit Category Modal -->
-    <Dialog v-if="showCreateCategoryModal || showEditCategoryModal" :open="true">
+    <Dialog v-if="showCreateCategoryModal || showEditCategoryModal" :open="true" @update:open="(open) => !open && closeCategoryModal()">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{{ showEditCategoryModal ? 'Edit Category' : 'Create Category' }}</DialogTitle>
@@ -278,7 +278,7 @@
     </Dialog>
 
     <!-- Create/Edit Subcategory Modal -->
-    <Dialog v-if="showCreateSubcategoryModal || showEditSubcategoryModal" :open="true">
+    <Dialog v-if="showCreateSubcategoryModal || showEditSubcategoryModal" :open="true" @update:open="(open) => !open && closeSubcategoryModal()">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{{ showEditSubcategoryModal ? 'Edit Subcategory' : 'Create Subcategory' }}</DialogTitle>

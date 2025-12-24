@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="true">
+  <Dialog :open="true" @update:open="(open) => !open && $emit('close')">
     <DialogContent class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>{{ isEdit ? 'Editar Cartão de Crédito' : 'Novo Cartão de Crédito' }}</DialogTitle>

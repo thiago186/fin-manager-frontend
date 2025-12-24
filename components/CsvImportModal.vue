@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="true">
+  <Dialog :open="true" @update:open="(open) => !open && handleClose()">
     <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Importar Transações CSV</DialogTitle>
