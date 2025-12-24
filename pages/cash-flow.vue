@@ -284,6 +284,60 @@
               </table>
             </div>
           </div>
+
+          <!-- Uncategorized Section -->
+          <div v-if="uncategorizedRow" class="mt-6 bg-white shadow rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Item
+                    </th>
+                    <th
+                      v-for="month in 12"
+                      :key="month"
+                      class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {{ formatMonthName(String(month)) }}
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total Anual
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr class="bg-gray-100">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-700">
+                        {{ uncategorizedRow.name }}
+                      </div>
+                    </td>
+                    <td
+                      v-for="month in 12"
+                      :key="month"
+                      class="px-4 py-4 whitespace-nowrap text-right text-sm"
+                      :class="[
+                        isZeroValue(uncategorizedRow.monthly_totals[String(month)] || '0') ? 'text-gray-400' : 
+                        parseFloat(uncategorizedRow.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                      ]"
+                    >
+                      {{ formatValue(uncategorizedRow.monthly_totals[String(month)] || '0') }}
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                      :class="[
+                        isZeroValue(uncategorizedRow.annual_total || '0') ? 'text-gray-400' : 
+                        parseFloat(uncategorizedRow.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                      ]"
+                    >
+                      {{ formatValue(uncategorizedRow.annual_total || '0.00') }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -343,7 +397,7 @@ const availableYears = computed(() => {
 
 // Flattened table rows including categories and subcategories
 interface TableRow {
-  type: 'group' | 'category' | 'subcategory' | 'result'
+  type: 'group' | 'category' | 'subcategory' | 'result' | 'uncategorized'
   id: string
   name: string
   monthly_totals: { [key: string]: string }
@@ -359,9 +413,15 @@ const tableRows = computed<TableRow[]>(() => {
   if (!currentReport.value) return []
   
   const rows: TableRow[] = []
-  const items = [...currentReport.value.items].sort((a, b) => a.position - b.position)
+  const items = [...currentReport.value.items]
   
-  for (const item of items) {
+  // Filter out uncategorized items - they'll be shown separately
+  const regularItems = items.filter(item => item.type !== 'uncategorized')
+  
+  // Sort regular items by position
+  const sortedItems = regularItems.sort((a, b) => a.position - b.position)
+  
+  for (const item of sortedItems) {
     if (item.type === 'group') {
       const groupItem = item as CashFlowReportGroupItem
       const isGroupExpanded = expandedGroups.value.has(item.position)
@@ -429,6 +489,24 @@ const tableRows = computed<TableRow[]>(() => {
   }
   
   return rows
+})
+
+// Separate computed property for uncategorized row
+const uncategorizedRow = computed<TableRow | null>(() => {
+  if (!currentReport.value) return null
+  
+  const uncategorizedItem = currentReport.value.items.find(item => item.type === 'uncategorized')
+  
+  if (!uncategorizedItem) return null
+  
+  return {
+    type: 'uncategorized',
+    id: 'uncategorized',
+    name: uncategorizedItem.name,
+    monthly_totals: { ...uncategorizedItem.monthly_totals },
+    annual_total: uncategorizedItem.annual_total,
+    position: 9999
+  }
 })
 
 // Methods

@@ -160,9 +160,19 @@ export interface CashFlowReportResultItem {
 }
 
 /**
+ * Report item for uncategorized transactions
+ */
+export interface CashFlowReportUncategorizedItem {
+  type: 'uncategorized'
+  name: string
+  monthly_totals: MonthlyTotals
+  annual_total: string
+}
+
+/**
  * Union type for report items
  */
-export type CashFlowReportItem = CashFlowReportGroupItem | CashFlowReportResultItem
+export type CashFlowReportItem = CashFlowReportGroupItem | CashFlowReportResultItem | CashFlowReportUncategorizedItem
 
 /**
  * Cash Flow Report response
