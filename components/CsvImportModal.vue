@@ -2,9 +2,9 @@
   <Dialog :open="true" @update:open="(open) => !open && handleClose()">
     <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle>Importar Transações CSV</DialogTitle>
+        <DialogTitle>Importar Transações</DialogTitle>
         <DialogDescription>
-          Envie seu arquivo CSV e associe a uma conta ou cartão.
+          Envie seu arquivo CSV ou JSON e associe a uma conta ou cartão.
         </DialogDescription>
       </DialogHeader>
 
@@ -21,7 +21,7 @@
         >
           <CloudArrowUpIcon class="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p class="text-sm text-muted-foreground mb-2">
-            Arraste e solte um arquivo CSV aqui, ou
+            Arraste e solte um arquivo CSV ou JSON aqui, ou
           </p>
           <Button variant="default" type="button" @click="fileInput?.click()">
             Selecionar arquivo
@@ -29,12 +29,12 @@
           <input
             ref="fileInput"
             type="file"
-            accept=".csv"
+            accept=".csv,.json"
             class="hidden"
             @change="handleFileSelect"
           />
           <p class="text-xs text-muted-foreground mt-2">
-            Apenas arquivos .csv são aceitos
+            Apenas arquivos .csv e .json são aceitos
           </p>
         </div>
       </div>
@@ -228,6 +228,7 @@ const emit = defineEmits<{
 // Composables
 const {
   uploadCSV,
+  uploadJSON,
   pollImportStatus,
   stopPolling,
   clearError
@@ -254,11 +255,12 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     const file = target.files[0]
-    if (file.name.toLowerCase().endsWith('.csv')) {
+    const fileName = file.name.toLowerCase()
+    if (fileName.endsWith('.csv') || fileName.endsWith('.json')) {
       selectedFile.value = file
       uploadError.value = null
     } else {
-      uploadError.value = 'Por favor, selecione um arquivo CSV (.csv)'
+      uploadError.value = 'Por favor, selecione um arquivo CSV (.csv) ou JSON (.json)'
     }
   }
 }
@@ -267,11 +269,12 @@ const handleDrop = (event: DragEvent) => {
   isDragging.value = false
   if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
     const file = event.dataTransfer.files[0]
-    if (file.name.toLowerCase().endsWith('.csv')) {
+    const fileName = file.name.toLowerCase()
+    if (fileName.endsWith('.csv') || fileName.endsWith('.json')) {
       selectedFile.value = file
       uploadError.value = null
     } else {
-      uploadError.value = 'Por favor, selecione um arquivo CSV (.csv)'
+      uploadError.value = 'Por favor, selecione um arquivo CSV (.csv) ou JSON (.json)'
     }
   }
 }
@@ -308,8 +311,13 @@ const handleUpload = async () => {
     ? { account_id: id }
     : { credit_card_id: id }
 
+  // Determine file type and call appropriate upload function
+  const fileName = selectedFile.value.name.toLowerCase()
+  const isJSON = fileName.endsWith('.json')
+  const uploadFunction = isJSON ? uploadJSON : uploadCSV
+
   try {
-    const result = await uploadCSV(selectedFile.value, uploadOptions)
+    const result = await uploadFunction(selectedFile.value, uploadOptions)
 
     if (!result.success || !result.data) {
       uploadError.value = result.error?.message || 'Falha ao fazer upload do arquivo'

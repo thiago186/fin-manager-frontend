@@ -88,6 +88,78 @@ export const useImportReports = () => {
     }
   }
 
+  // Upload JSON file
+  const uploadJSON = async (
+    file: File,
+    options?: { account_id?: number; credit_card_id?: number }
+  ): Promise<ImportReportApiResult<CSVUploadResponse>> => {
+    uploading.value = true
+    error.value = null
+
+    // Validate file extension
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      const errorMessage = 'Por favor, selecione um arquivo JSON (.json)'
+      error.value = errorMessage
+      uploading.value = false
+      return {
+        success: false,
+        error: { message: errorMessage }
+      }
+    }
+
+    // Validate that either account_id or credit_card_id is provided
+    if (!options?.account_id && !options?.credit_card_id) {
+      const errorMessage = 'É necessário selecionar uma conta ou cartão de crédito'
+      error.value = errorMessage
+      uploading.value = false
+      return {
+        success: false,
+        error: { message: errorMessage }
+      }
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      if (options?.account_id) {
+        formData.append('account_id', String(options.account_id))
+      }
+      
+      if (options?.credit_card_id) {
+        formData.append('credit_card_id', String(options.credit_card_id))
+      }
+
+      const response = await $fetch<CSVUploadResponse>('/finance/transactions/import-json/', {
+        baseURL: config.public.apiBase,
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      uploading.value = false
+      return { success: true, data: response }
+    } catch (err: any) {
+      let errorMessage = 'Falha ao fazer upload do arquivo'
+      
+      if (err?.data?.file && Array.isArray(err.data.file) && err.data.file.length > 0) {
+        errorMessage = err.data.file[0]
+      } else if (err?.data?.error) {
+        errorMessage = err.data.error
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+
+      error.value = errorMessage
+      uploading.value = false
+      console.error('Error uploading JSON:', err)
+      return {
+        success: false,
+        error: { message: errorMessage, code: err?.status?.toString() }
+      }
+    }
+  }
+
   // Get single import report by ID
   const getImportReport = async (id: number): Promise<ImportReportApiResult<ImportReport>> => {
     try {
@@ -305,6 +377,7 @@ export const useImportReports = () => {
 
     // Methods
     uploadCSV,
+    uploadJSON,
     getImportReport,
     loadImportReports,
     pollImportStatus,
