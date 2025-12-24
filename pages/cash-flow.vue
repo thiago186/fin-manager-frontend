@@ -6,26 +6,17 @@
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Fluxo de Caixa</h1>
           <p class="mt-1 text-sm text-gray-500">
-            Visualize suas receitas e despesas organizadas por categoria
+            Visualize seus relatórios financeiros personalizados
           </p>
         </div>
         <div class="flex space-x-3">
-          <!-- Month Selector -->
-          <div class="flex items-center space-x-2">
-            <label class="text-sm font-medium text-gray-700">Mês:</label>
-            <input
-              v-model="selectedMonth"
-              type="month"
-              class="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-          <button
-            @click="refreshData"
-            class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          <NuxtLink
+            to="/cash-flow/create"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            <ArrowPathIcon class="h-4 w-4 mr-2" />
-            Atualizar
-          </button>
+            <PlusIcon class="h-4 w-4 mr-2" />
+            Nova Visualização
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -33,7 +24,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      <span class="ml-2">Carregando dados...</span>
+      <span class="ml-2">Carregando visualizações...</span>
     </div>
 
     <!-- Error State -->
@@ -53,295 +44,188 @@
       </div>
     </div>
 
-    <!-- Cash Flow Content -->
+    <!-- Views List or Dashboard -->
     <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Total Income -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowUpIcon class="h-6 w-6 text-green-400" />
+      <!-- Show views list if no view is selected -->
+      <div v-if="!selectedViewId" class="space-y-4">
+        <div v-if="views.length === 0" class="text-center py-12">
+          <ChartBarIcon class="mx-auto h-12 w-12 text-gray-400" />
+          <h3 class="mt-2 text-sm font-medium text-gray-900">
+            Nenhuma visualização encontrada
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Crie sua primeira visualização de fluxo de caixa para começar.
+          </p>
+          <div class="mt-6">
+            <NuxtLink
+              to="/cash-flow/create"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              <PlusIcon class="h-4 w-4 mr-2" />
+              Criar Visualização
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Views Grid -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            v-for="view in views"
+            :key="view.id"
+            @click="selectView(view.id)"
+            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-indigo-500"
+          >
+            <div class="p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    {{ view.name }}
+                  </h3>
+                  <div class="flex items-center space-x-4 text-sm text-gray-500">
+                    <div class="flex items-center">
+                      <FolderIcon class="h-4 w-4 mr-1" />
+                      {{ view.groups.length }} grupo{{ view.groups.length !== 1 ? 's' : '' }}
+                    </div>
+                    <div class="flex items-center">
+                      <CalculatorIcon class="h-4 w-4 mr-1" />
+                      {{ view.results.length }} resultado{{ view.results.length !== 1 ? 's' : '' }}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRightIcon class="h-5 w-5 text-gray-400" />
               </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total Receitas
-                  </dt>
-                  <dd class="text-2xl font-bold text-green-600">
-                    {{ formatCurrency(cashFlowData.totalIncome.toString()) }}
-                  </dd>
-                </dl>
+              <div class="mt-4 text-xs text-gray-400">
+                Criado em {{ formatDate(view.created_at) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Show dashboard for selected view -->
+      <div v-else class="space-y-6">
+        <!-- Back Button and View Info -->
+        <div class="flex items-center justify-between">
+          <button
+            @click="selectedViewId = null; currentReport = null"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+          >
+            <ArrowLeftIcon class="h-4 w-4 mr-2" />
+            Voltar para lista
+          </button>
+          <div class="flex items-center space-x-4">
+            <div class="text-sm text-gray-500">
+              Visualização: <span class="font-medium text-gray-900">{{ selectedViewName }}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <label class="text-sm font-medium text-gray-700">Ano:</label>
+              <select
+                v-model="selectedYear"
+                @change="loadReport"
+                class="border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              >
+                <option v-for="year in availableYears" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Loading State -->
+        <div v-if="reportLoading" class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span class="ml-2">Carregando relatório...</span>
+        </div>
+
+        <!-- Report Error State -->
+        <div v-else-if="reportError" class="bg-red-50 border border-red-200 rounded-md p-4">
+          <div class="flex">
+            <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">
+                Erro ao carregar relatório
+              </h3>
+              <div class="mt-2 text-sm text-red-700">
+                {{ reportError }}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Total Expenses -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ArrowDownIcon class="h-6 w-6 text-red-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Total Despesas
-                  </dt>
-                  <dd class="text-2xl font-bold text-red-600">
-                    {{ formatCurrency(cashFlowData.totalExpenses.toString()) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <!-- Report Dashboard -->
+        <div v-else-if="currentReport" class="space-y-6">
+          <!-- Report Header -->
+          <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+              {{ currentReport.view_name }}
+            </h2>
+            <p class="text-sm text-gray-500">
+              Relatório anual para {{ selectedYear }}
+            </p>
           </div>
-        </div>
 
-        <!-- Net Cash Flow -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <BanknotesIcon class="h-6 w-6 text-blue-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate">
-                    Saldo do Mês
-                  </dt>
-                  <dd 
+          <!-- Report Table -->
+          <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Item
+                    </th>
+                    <th
+                      v-for="month in 12"
+                      :key="month"
+                      class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {{ formatMonthName(String(month)) }}
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total Anual
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr
+                    v-for="item in sortedReportItems"
+                    :key="`${item.type}-${item.position}`"
                     :class="[
-                      'text-2xl font-bold',
-                      cashFlowData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                      item.type === 'result' ? 'bg-gray-50 font-semibold' : '',
+                      item.type === 'group' && item.position % 2 === 0 ? 'bg-gray-25' : ''
                     ]"
                   >
-                    {{ formatCurrency(cashFlowData.netCashFlow.toString()) }}
-                  </dd>
-                </dl>
-              </div>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ item.name }}
+                      </div>
+                      <div v-if="item.type === 'group' && 'categories' in item && item.categories.length > 0" class="text-xs text-gray-500 mt-1">
+                        {{ item.categories.map(c => c.name).join(', ') }}
+                      </div>
+                    </td>
+                    <td
+                      v-for="month in 12"
+                      :key="month"
+                      class="px-4 py-4 whitespace-nowrap text-right text-sm"
+                      :class="[
+                        item.type === 'result' ? 'font-semibold' : '',
+                        parseFloat(item.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                      ]"
+                    >
+                      {{ formatCurrency(item.monthly_totals[String(month)] || '0') }}
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                      :class="[
+                        parseFloat(item.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                      ]"
+                    >
+                      {{ formatCurrency(item.annual_total || '0.00') }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Income Section -->
-      <div class="bg-white shadow rounded-lg mb-8">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <ArrowUpIcon class="h-5 w-5 text-green-500 mr-2" />
-              <h2 class="text-lg font-medium text-gray-900">Receitas</h2>
-              <span class="ml-2 text-sm text-gray-500">
-                ({{ cashFlowData.incomeByCategory.length }} categorias)
-              </span>
-            </div>
-            <button
-              @click="toggleIncomeSection"
-              class="text-gray-400 hover:text-gray-600"
-            >
-              <ChevronDownIcon 
-                v-if="!incomeCollapsed" 
-                class="h-5 w-5" 
-              />
-              <ChevronRightIcon 
-                v-else 
-                class="h-5 w-5" 
-              />
-            </button>
-          </div>
-        </div>
-
-        <div v-if="!incomeCollapsed" class="divide-y divide-gray-200">
-          <!-- Income Categories -->
-          <div
-            v-for="category in cashFlowData.incomeByCategory"
-            :key="category.id"
-            class="px-6 py-4"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div 
-                  class="w-3 h-3 rounded-full mr-3"
-                  :style="{ backgroundColor: category.color || '#10B981' }"
-                ></div>
-                <div>
-                  <h3 class="text-sm font-medium text-gray-900">
-                    {{ category.name }}
-                  </h3>
-                  <p class="text-xs text-gray-500">
-                    {{ category.transactionCount }} transação{{ category.transactionCount !== 1 ? 'es' : '' }}
-                  </p>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-sm font-medium text-green-600">
-                  {{ formatCurrency(category.totalAmount.toString()) }}
-                </div>
-                <div class="text-xs text-gray-500">
-                  {{ ((category.totalAmount / cashFlowData.totalIncome) * 100).toFixed(1) }}%
-                </div>
-              </div>
-            </div>
-
-            <!-- Category Transactions (Collapsible) -->
-            <div v-if="category.transactions && category.transactions.length > 0" class="mt-3">
-              <button
-                @click="toggleCategoryTransactions(category.id)"
-                class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-              >
-                <ChevronDownIcon 
-                  v-if="!collapsedCategories.includes(category.id)" 
-                  class="h-3 w-3 mr-1" 
-                />
-                <ChevronRightIcon 
-                  v-else 
-                  class="h-3 w-3 mr-1" 
-                />
-                Ver transações
-              </button>
-
-              <div 
-                v-if="!collapsedCategories.includes(category.id)"
-                class="mt-2 ml-4 space-y-2"
-              >
-                <div
-                  v-for="transaction in category.transactions"
-                  :key="transaction.id"
-                  class="flex items-center justify-between text-xs text-gray-600 py-1"
-                >
-                  <div class="flex-1">
-                    <div class="font-medium">{{ transaction.description || 'Sem descrição' }}</div>
-                    <div class="text-gray-400">{{ formatDate(transaction.occurred_at) }}</div>
-                  </div>
-                  <div class="text-green-600 font-medium">
-                    {{ formatCurrency(transaction.amount) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- No Income Message -->
-          <div v-if="cashFlowData.incomeByCategory.length === 0" class="px-6 py-8 text-center">
-            <ArrowUpIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma receita encontrada
-            </h3>
-            <p class="mt-1 text-sm text-gray-500">
-              Não há receitas registradas para este mês.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Expenses Section -->
-      <div class="bg-white shadow rounded-lg mb-8">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <ArrowDownIcon class="h-5 w-5 text-red-500 mr-2" />
-              <h2 class="text-lg font-medium text-gray-900">Despesas</h2>
-              <span class="ml-2 text-sm text-gray-500">
-                ({{ cashFlowData.expensesByCategory.length }} categorias)
-              </span>
-            </div>
-            <button
-              @click="toggleExpensesSection"
-              class="text-gray-400 hover:text-gray-600"
-            >
-              <ChevronDownIcon 
-                v-if="!expensesCollapsed" 
-                class="h-5 w-5" 
-              />
-              <ChevronRightIcon 
-                v-else 
-                class="h-5 w-5" 
-              />
-            </button>
-          </div>
-        </div>
-
-        <div v-if="!expensesCollapsed" class="divide-y divide-gray-200">
-          <!-- Expense Categories -->
-          <div
-            v-for="category in cashFlowData.expensesByCategory"
-            :key="category.id"
-            class="px-6 py-4"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div 
-                  class="w-3 h-3 rounded-full mr-3"
-                  :style="{ backgroundColor: category.color || '#EF4444' }"
-                ></div>
-                <div>
-                  <h3 class="text-sm font-medium text-gray-900">
-                    {{ category.name }}
-                  </h3>
-                  <p class="text-xs text-gray-500">
-                    {{ category.transactionCount }} transação{{ category.transactionCount !== 1 ? 'es' : '' }}
-                  </p>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-sm font-medium text-red-600">
-                  {{ formatCurrency(category.totalAmount.toString()) }}
-                </div>
-                <div class="text-xs text-gray-500">
-                  {{ ((category.totalAmount / cashFlowData.totalExpenses) * 100).toFixed(1) }}%
-                </div>
-              </div>
-            </div>
-
-            <!-- Category Transactions (Collapsible) -->
-            <div v-if="category.transactions && category.transactions.length > 0" class="mt-3">
-              <button
-                @click="toggleCategoryTransactions(category.id)"
-                class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-              >
-                <ChevronDownIcon 
-                  v-if="!collapsedCategories.includes(category.id)" 
-                  class="h-3 w-3 mr-1" 
-                />
-                <ChevronRightIcon 
-                  v-else 
-                  class="h-3 w-3 mr-1" 
-                />
-                Ver transações
-              </button>
-
-              <div 
-                v-if="!collapsedCategories.includes(category.id)"
-                class="mt-2 ml-4 space-y-2"
-              >
-                <div
-                  v-for="transaction in category.transactions"
-                  :key="transaction.id"
-                  class="flex items-center justify-between text-xs text-gray-600 py-1"
-                >
-                  <div class="flex-1">
-                    <div class="font-medium">{{ transaction.description || 'Sem descrição' }}</div>
-                    <div class="text-gray-400">{{ formatDate(transaction.occurred_at) }}</div>
-                  </div>
-                  <div class="text-red-600 font-medium">
-                    {{ formatCurrency(transaction.amount) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- No Expenses Message -->
-          <div v-if="cashFlowData.expensesByCategory.length === 0" class="px-6 py-8 text-center">
-            <ArrowDownIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-medium text-gray-900">
-              Nenhuma despesa encontrada
-            </h3>
-            <p class="mt-1 text-sm text-gray-500">
-              Não há despesas registradas para este mês.
-            </p>
           </div>
         </div>
       </div>
@@ -351,158 +235,78 @@
 
 <script setup lang="ts">
 import {
-  ArrowUpIcon,
-  ArrowDownIcon,
+  ArrowLeftIcon,
   ArrowPathIcon,
   ExclamationTriangleIcon,
-  ChevronDownIcon,
   ChevronRightIcon,
-  BanknotesIcon
+  PlusIcon,
+  ChartBarIcon,
+  FolderIcon,
+  CalculatorIcon
 } from '@heroicons/vue/24/outline'
-
-import type { Transaction } from '~/types/transactions'
+import type { CashFlowReportItem } from '~/types/cashFlowViews'
 
 // Page metadata
 definePageMeta({
   middleware: 'auth'
 })
 
-// Types
-interface CategorySummary {
-  id: number
-  name: string
-  color?: string
-  totalAmount: number
-  transactionCount: number
-  transactions?: Transaction[]
-}
-
-interface CashFlowData {
-  totalIncome: number
-  totalExpenses: number
-  netCashFlow: number
-  incomeByCategory: CategorySummary[]
-  expensesByCategory: CategorySummary[]
-}
-
 // Composables
-const { 
-  transactions,
+const {
+  views,
   loading,
   error,
+  currentReport,
+  reportLoading,
+  reportError,
+  loadCashFlowViews,
+  getCashFlowReport,
   formatCurrency,
-  formatDate,
-  loadTransactions
-} = useTransactions()
+  formatMonthName
+} = useCashFlowViews()
 
 // Local state
-const selectedMonth = ref(new Date().toISOString().slice(0, 7)) // YYYY-MM format
-const incomeCollapsed = ref(false)
-const expensesCollapsed = ref(false)
-const collapsedCategories = ref<number[]>([])
+const selectedViewId = ref<number | null>(null)
+const selectedViewName = ref<string>('')
+const selectedYear = ref(new Date().getFullYear())
 
 // Computed
-const cashFlowData = computed<CashFlowData>(() => {
-  if (!transactions.value) {
-    return {
-      totalIncome: 0,
-      totalExpenses: 0,
-      netCashFlow: 0,
-      incomeByCategory: [],
-      expensesByCategory: []
-    }
+const availableYears = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    years.push(i)
   }
+  return years
+})
 
-  // Filter transactions for selected month
-  const [year, month] = selectedMonth.value.split('-').map(Number)
-  const filteredTransactions = transactions.value.filter(transaction => {
-    const transactionDate = new Date(transaction.occurred_at)
-    return transactionDate.getFullYear() === year && 
-           transactionDate.getMonth() === month - 1 &&
-           transaction.transaction_type !== 'TRANSFER'
-  })
-
-  // Separate income and expenses
-  const incomeTransactions = filteredTransactions.filter(t => t.transaction_type === 'INCOME')
-  const expenseTransactions = filteredTransactions.filter(t => t.transaction_type === 'EXPENSE')
-
-  // Calculate totals
-  const totalIncome = incomeTransactions.reduce((sum, t) => sum + Number(t.amount), 0)
-  const totalExpenses = expenseTransactions.reduce((sum, t) => sum + Number(t.amount), 0)
-  const netCashFlow = totalIncome - totalExpenses
-
-  // Group by category
-  const incomeByCategory = groupTransactionsByCategory(incomeTransactions as Transaction[])
-  const expensesByCategory = groupTransactionsByCategory(expenseTransactions as Transaction[])
-
-  return {
-    totalIncome,
-    totalExpenses,
-    netCashFlow,
-    incomeByCategory,
-    expensesByCategory
-  }
+const sortedReportItems = computed<CashFlowReportItem[]>(() => {
+  if (!currentReport.value) return []
+  return [...currentReport.value.items].sort((a, b) => a.position - b.position)
 })
 
 // Methods
-const groupTransactionsByCategory = (transactions: Transaction[]): CategorySummary[] => {
-  const categoryMap = new Map<number, CategorySummary>()
-
-  transactions.forEach(transaction => {
-    const categoryId = transaction.category?.id || 0
-    const categoryName = transaction.category?.name || 'Sem categoria'
-    const categoryColor = (transaction.category as any)?.color
-
-    if (!categoryMap.has(categoryId)) {
-      categoryMap.set(categoryId, {
-        id: categoryId,
-        name: categoryName,
-        color: categoryColor,
-        totalAmount: 0,
-        transactionCount: 0,
-        transactions: []
-      })
-    }
-
-    const category = categoryMap.get(categoryId)!
-    category.totalAmount += Number(transaction.amount)
-    category.transactionCount += 1
-    category.transactions!.push(transaction)
-  })
-
-  // Sort by total amount (descending)
-  return Array.from(categoryMap.values()).sort((a, b) => b.totalAmount - a.totalAmount)
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('pt-BR')
 }
 
-const toggleIncomeSection = () => {
-  incomeCollapsed.value = !incomeCollapsed.value
-}
-
-const toggleExpensesSection = () => {
-  expensesCollapsed.value = !expensesCollapsed.value
-}
-
-const toggleCategoryTransactions = (categoryId: number) => {
-  const index = collapsedCategories.value.indexOf(categoryId)
-  if (index > -1) {
-    collapsedCategories.value.splice(index, 1)
-  } else {
-    collapsedCategories.value.push(categoryId)
+const selectView = async (viewId: number) => {
+  selectedViewId.value = viewId
+  const view = views.value.find(v => v.id === viewId)
+  if (view) {
+    selectedViewName.value = view.name
+    await loadReport()
   }
 }
 
-const refreshData = async () => {
-  await loadTransactions()
+const loadReport = async () => {
+  if (selectedViewId.value) {
+    await getCashFlowReport(selectedViewId.value, selectedYear.value)
+  }
 }
-
-// Watch for month changes
-watch(selectedMonth, () => {
-  // Reset collapsed states when month changes
-  collapsedCategories.value = []
-})
 
 // Initialize data
 onMounted(async () => {
-  await loadTransactions()
+  await loadCashFlowViews()
 })
-</script> 
+</script>
