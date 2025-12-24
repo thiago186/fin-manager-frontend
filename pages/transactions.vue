@@ -267,16 +267,10 @@
                         {{ transaction.description || 'Sem descrição' }}
                       </div>
                     </TableCell>
-                    <TableCell 
-                      class="whitespace-nowrap text-sm text-gray-900"
-                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.category_id !== undefined }"
-                    >
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
                       {{ getDisplayCategoryName(transaction) }}
                     </TableCell>
-                    <TableCell 
-                      class="whitespace-nowrap text-sm text-gray-900"
-                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
-                    >
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
                       <Select 
                         :model-value="getCurrentSubcategoryValue(transaction)"
                         @update:model-value="(value) => handleSubcategoryChange(transaction, value as string)"
@@ -290,7 +284,6 @@
                       >
                         <SelectTrigger 
                           class="w-full border-none shadow-none hover:bg-muted/50 p-1 h-auto data-[state=open]:bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
-                          :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
                         >
                           <SelectValue class="text-sm text-gray-900">
                             {{ getDisplaySubcategoryName(transaction) }}
@@ -313,10 +306,7 @@
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell 
-                      class="whitespace-nowrap text-sm text-gray-900"
-                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) }"
-                    >
+                    <TableCell class="whitespace-nowrap text-sm text-gray-900">
                       <Select 
                         :model-value="getCurrentAccountCardValue(transaction)"
                         @update:model-value="(value) => handleAccountCardChange(transaction, value as string)"
@@ -330,7 +320,6 @@
                       >
                         <SelectTrigger 
                           class="w-full border-none shadow-none hover:bg-muted/50 p-1 h-auto data-[state=open]:bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
-                          :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) }"
                         >
                           <div class="flex items-center w-full cursor-pointer">
                             <div class="flex-shrink-0 mr-2">
