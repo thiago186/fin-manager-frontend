@@ -269,6 +269,12 @@
                     </TableCell>
                     <TableCell 
                       class="whitespace-nowrap text-sm text-gray-900"
+                      :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.category_id !== undefined }"
+                    >
+                      {{ getDisplayCategoryName(transaction) }}
+                    </TableCell>
+                    <TableCell 
+                      class="whitespace-nowrap text-sm text-gray-900"
                       :class="{ 'ring-2 ring-blue-500': pendingChanges.has(transaction.id) && pendingChanges.get(transaction.id)?.subcategory_id !== undefined }"
                     >
                       <Select 
@@ -542,6 +548,7 @@ const tableColumns = [
   { key: 'occurred_at', label: 'Data', sortable: true, width: '120px' },
   { key: 'transaction_type', label: 'Tipo', sortable: true, width: '100px' },
   { key: 'description', label: 'Descrição', sortable: false, width: '200px' },
+  { key: 'category', label: 'Categoria', sortable: false, width: '120px' },
   { key: 'subcategory', label: 'Subcategoria', sortable: false, width: '120px' },
   { key: 'account', label: 'Conta/Cartão', sortable: false, width: '150px' },
   { key: 'amount', label: 'Valor', sortable: true, width: '120px', align: 'right' },
@@ -652,6 +659,20 @@ const getDisplayAccountCardName = (transaction: Transaction): string => {
   
   // Show original value
   return transaction.account?.name || transaction.credit_card?.name || '-'
+}
+
+const getDisplayCategoryName = (transaction: Transaction): string => {
+  // Get effective current values (pending change or original)
+  const pendingChange = pendingChanges.value.get(transaction.id)
+  
+  // Check if there's a pending change for category
+  if (pendingChange?.category_id !== null && pendingChange?.category_id !== undefined) {
+    const category = categories.value.find(c => c.id === pendingChange.category_id)
+    return category?.name || '-'
+  }
+  
+  // Show original value
+  return transaction.category?.name || '-'
 }
 
 const getDisplayAccountCardIcon = (transaction: Transaction) => {
