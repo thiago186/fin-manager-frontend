@@ -463,19 +463,6 @@ const loadReport = async () => {
     expandedGroups.value.clear()
     expandedCategories.value.clear()
     await getCashFlowReport(selectedViewId.value, selectedYear.value)
-    
-    // Expand all groups by default to show categories
-    if (currentReport.value) {
-      const items = [...currentReport.value.items].sort((a, b) => a.position - b.position)
-      for (const item of items) {
-        if (item.type === 'group') {
-          const groupItem = item as CashFlowReportGroupItem
-          if (groupItem.categories && groupItem.categories.length > 0) {
-            expandedGroups.value.add(item.position)
-          }
-        }
-      }
-    }
   }
 }
 
