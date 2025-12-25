@@ -20,6 +20,24 @@
             <ArrowUpTrayIcon class="h-4 w-4 mr-2" />
             Importar CSV/JSON
           </Button>
+          <Button 
+            variant="outline" 
+            @click="handleClassifyTransactions"
+            :disabled="classifying"
+          >
+            <SparklesIcon v-if="!classifying" class="h-4 w-4 mr-2" />
+            <svg v-else class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ classifying ? 'Categorizando...' : 'Categorizar' }}
+          </Button>
+          <Button as-child variant="outline">
+            <NuxtLink to="/transactions/review" class="inline-flex items-center">
+              <ClipboardDocumentCheckIcon class="h-4 w-4 mr-2" />
+              Revisar Transações
+            </NuxtLink>
+          </Button>
           <ButtonGroup>
             <Button @click="openCreateTransactionModal('INCOME')">
               Receita
@@ -464,7 +482,9 @@ import {
   CreditCardIcon,
   ArrowUpTrayIcon,
   ClockIcon,
-  CheckIcon
+  CheckIcon,
+  SparklesIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/vue/24/outline'
 import { Button } from '@/components/ui/button'
 import {
@@ -511,6 +531,7 @@ const {
   transactions,
   loading,
   error,
+  classifying,
   filters,
   sort,
   filteredTransactions,
@@ -518,6 +539,7 @@ const {
   loadTransactions,
   deleteTransaction: deleteTransactionApi,
   bulkUpdateTransactions,
+  classifyTransactions,
   applyTableFilters,
   applyTableSort,
   formatCurrency,
@@ -644,6 +666,15 @@ const handleImportComplete = async () => {
   showImportModal.value = false
   // Refresh transactions after successful import
   await loadTransactions()
+}
+
+const handleClassifyTransactions = async () => {
+  const result = await classifyTransactions()
+  if (result.success) {
+    alert('Transações categorizadas com sucesso!')
+  } else {
+    alert('Erro ao categorizar transações: ' + (result.error?.message || 'Erro desconhecido'))
+  }
 }
 
 // Account/Credit Card editing methods

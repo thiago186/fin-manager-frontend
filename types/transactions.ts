@@ -73,6 +73,7 @@ export interface Transaction {
   subcategory_id?: number | null
   tags: Tag[]
   tag_ids?: number[]
+  need_review?: boolean
 }
 
 /**
@@ -301,6 +302,7 @@ export interface BulkTransactionUpdate {
   tag_ids?: number[]
   installments_total?: number
   installment_number?: number
+  need_review?: boolean
 }
 
 /**

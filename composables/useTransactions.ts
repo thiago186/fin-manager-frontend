@@ -15,8 +15,11 @@ export const useTransactions = () => {
   
   // State
   const transactions = ref<Transaction[]>([])
+  const transactionsNeedingReview = ref<Transaction[]>([])
   const loading = ref(false)
+  const loadingReview = ref(false)
   const error = ref<string | null>(null)
+  const classifying = ref(false)
   const filters = ref<TransactionTableFilters>({})
   const sort = ref<TransactionTableSort>({ key: 'occurred_at', direction: 'desc' })
 
@@ -63,6 +66,33 @@ export const useTransactions = () => {
       }
     } finally {
       loading.value = false
+    }
+  }
+
+  // Load transactions needing review
+  const loadTransactionsNeedingReview = async (): Promise<TransactionApiResult<Transaction[]>> => {
+    loadingReview.value = true
+    error.value = null
+    
+    try {
+      const response = await $fetch<Transaction[]>('/finance/transactions/needing-review/', {
+        baseURL: config.public.apiBase,
+        credentials: 'include'
+      })
+      
+      transactionsNeedingReview.value = response
+      console.log('Transactions needing review loaded:', response)
+      return { success: true, data: response }
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || 'Falha ao carregar transações para revisão'
+      error.value = errorMessage
+      console.error('Error loading transactions needing review:', err)
+      return { 
+        success: false, 
+        error: { message: errorMessage, code: err?.status?.toString() } 
+      }
+    } finally {
+      loadingReview.value = false
     }
   }
 
@@ -182,6 +212,35 @@ export const useTransactions = () => {
       }
     } finally {
       loading.value = false
+    }
+  }
+
+  // Classify transactions using AI
+  const classifyTransactions = async (): Promise<TransactionApiResult<void>> => {
+    classifying.value = true
+    error.value = null
+    
+    try {
+      await $fetch('/ai/classify-transactions/', {
+        baseURL: config.public.apiBase,
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      // Refresh transactions after successful classification
+      await loadTransactions()
+      
+      return { success: true }
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || err?.data?.detail || 'Falha ao categorizar transações'
+      error.value = errorMessage
+      console.error('Error classifying transactions:', err)
+      return { 
+        success: false, 
+        error: { message: errorMessage, code: err?.status?.toString() } 
+      }
+    } finally {
+      classifying.value = false
     }
   }
 
@@ -418,8 +477,11 @@ export const useTransactions = () => {
   return {
     // State
     transactions: readonly(transactions),
+    transactionsNeedingReview: readonly(transactionsNeedingReview),
     loading: readonly(loading),
+    loadingReview: readonly(loadingReview),
     error: readonly(error),
+    classifying: readonly(classifying),
     filters: readonly(filters),
     sort: readonly(sort),
     
@@ -429,10 +491,12 @@ export const useTransactions = () => {
     
     // Methods
     loadTransactions,
+    loadTransactionsNeedingReview,
     createTransaction,
     updateTransaction,
     deleteTransaction,
     bulkUpdateTransactions,
+    classifyTransactions,
     getTransaction,
     formatTransactionData,
     applyTableFilters,
