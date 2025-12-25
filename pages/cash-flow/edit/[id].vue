@@ -12,9 +12,9 @@
             Voltar
           </NuxtLink>
           <div>
-            <h1 class="text-3xl font-bold text-gray-900">Nova Visualização</h1>
+            <h1 class="text-3xl font-bold text-gray-900">Editar Visualização</h1>
             <p class="mt-1 text-sm text-gray-500">
-              Configure sua visualização de fluxo de caixa
+              Modifique sua visualização de fluxo de caixa
             </p>
           </div>
         </div>
@@ -23,7 +23,37 @@
 
     <!-- Form Content -->
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <form @submit.prevent="handleSubmit" class="space-y-8">
+      <!-- Loading State for Initial Fetch -->
+      <div v-if="isInitializing" class="text-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+        <p class="mt-4 text-gray-500">Carregando visualização...</p>
+      </div>
+
+      <!-- Error Loading View -->
+      <div v-else-if="fetchError" class="bg-red-50 border border-red-200 rounded-md p-6">
+        <div class="flex">
+          <ExclamationTriangleIcon class="h-5 w-5 text-red-400" />
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">
+              Erro ao carregar visualização
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              {{ fetchError }}
+            </div>
+            <div class="mt-4">
+              <NuxtLink
+                to="/cash-flow"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Voltar para lista
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form v-else @submit.prevent="handleSubmit" class="space-y-8">
         <!-- Error Alert -->
         <Alert v-if="error" variant="destructive">
           <ExclamationTriangleIcon class="h-4 w-4" />
@@ -80,7 +110,7 @@
             <div v-else class="space-y-6">
               <div
                 v-for="(group, groupIndex) in form.groups"
-                :key="groupIndex"
+                :key="`${formKey}-${group.id || `new-group-${groupIndex}`}`"
                 class="border border-gray-200 rounded-lg p-4 bg-gray-50"
               >
                 <div class="flex items-start justify-between mb-4">
@@ -137,7 +167,7 @@
                         class="flex items-center space-x-2"
                       >
                         <Checkbox
-                          :key="`checkbox-${groupIndex}-${category.id}`"
+                          :key="`${formKey}-checkbox-${groupIndex}-${category.id}`"
                           :id="`group-${groupIndex}-cat-${category.id}`"
                           :model-value="isCategorySelected(groupIndex, category.id)"
                           @update:model-value="(checked: boolean | 'indeterminate') => toggleCategory(groupIndex, category.id, checked === true)"
@@ -195,7 +225,7 @@
             <div v-else class="space-y-4">
               <div
                 v-for="(result, resultIndex) in form.results"
-                :key="resultIndex"
+                :key="result.id || `new-result-${resultIndex}`"
                 class="flex items-center gap-4 border border-gray-200 rounded-lg p-4 bg-gray-50"
               >
                 <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 text-sm font-medium">
@@ -279,7 +309,7 @@
               </svg>
               Salvando...
             </span>
-            <span v-else>Criar Visualização</span>
+            <span v-else>Atualizar Visualização</span>
           </Button>
         </div>
         
@@ -327,9 +357,25 @@ definePageMeta({
 })
 
 // Composables
+const route = useRoute()
 const router = useRouter()
-const { createCashFlowView, formatViewData } = useCashFlowViews()
+const { 
+  getCashFlowView, 
+  updateCashFlowView, 
+  cashFlowViewToForm, 
+  formToUpdateData 
+} = useCashFlowViews()
 const { categories, loading: categoriesLoading, loadCategories } = useCategories()
+
+// Get view ID from route params
+const routeParams = route.params
+const viewId = computed(() => {
+  const id = routeParams.id
+  if (Array.isArray(id)) {
+    return parseInt(id[0], 10)
+  }
+  return parseInt(id, 10)
+})
 
 // Form state
 const form = ref<CashFlowViewForm>({
@@ -340,10 +386,20 @@ const form = ref<CashFlowViewForm>({
 
 // UI state
 const isSubmitting = ref(false)
+const isLoadingExisting = ref(true)
 const error = ref<string | null>(null)
+const fetchError = ref<string | null>(null)
 
 // Position counter - tracks next position for groups and results
 const nextPosition = ref(0)
+
+// Force reactivity key - increment when form data changes to force re-render
+const formKey = ref(0)
+
+// Computed: combined loading state - true when either categories or form data is loading
+const isInitializing = computed(() => {
+  return isLoadingExisting.value || categoriesLoading.value
+})
 
 // Computed: ordered items for preview
 const orderedItems = computed(() => {
@@ -504,8 +560,8 @@ const handleSubmit = async (e?: Event) => {
   error.value = null
   
   try {
-    // Format form data for API - ensure category_ids are numbers
-    const requestData = formatViewData(form.value)
+    // Convert form to update request
+    const requestData = formToUpdateData(form.value)
     
     // Ensure all category_ids are integers
     requestData.groups = requestData.groups.map(group => ({
@@ -513,22 +569,91 @@ const handleSubmit = async (e?: Event) => {
       category_ids: group.category_ids.map(id => Number(id))
     }))
     
-    console.log('Submitting request:', requestData)
+    console.log('Submitting update request:', requestData)
     
-    const result = await createCashFlowView(requestData)
+    const result = await updateCashFlowView(viewId.value, requestData)
     
     if (result.success) {
       // Navigate back to cash flow list
       router.push('/cash-flow')
     } else {
-      error.value = result.error?.message || 'Erro ao criar visualização'
+      error.value = result.error?.message || 'Erro ao atualizar visualização'
       console.error('API error:', result.error)
     }
   } catch (err: any) {
-    error.value = err?.message || 'Erro desconhecido ao criar visualização'
-    console.error('Error creating cash flow view:', err)
+    error.value = err?.message || 'Erro desconhecido ao atualizar visualização'
+    console.error('Error updating cash flow view:', err)
   } finally {
     isSubmitting.value = false
+  }
+}
+
+// Fetch existing view data
+const fetchExistingView = async () => {
+  isLoadingExisting.value = true
+  fetchError.value = null
+  
+  try {
+    // Safety check: ensure categories are loaded before processing form data
+    if (categoriesLoading.value || categories.value.length === 0) {
+      console.log('Waiting for categories to load before processing form data...')
+      // Wait a bit and check again (categories should already be loaded from onMounted)
+      await new Promise(resolve => setTimeout(resolve, 100))
+      if (categoriesLoading.value) {
+        console.warn('Categories still loading, but proceeding anyway')
+      }
+    }
+    
+    console.log('Fetching existing view with ID:', viewId.value)
+    const result = await getCashFlowView(viewId.value)
+    
+    if (result.success && result.data) {
+      // Convert API response to form format
+      const formData = cashFlowViewToForm(result.data)
+      
+      // Ensure category_ids are arrays of numbers for reactivity
+      formData.groups = formData.groups.map(g => ({
+        ...g,
+        category_ids: g.category_ids.map(id => Number(id))
+      }))
+      
+      // Assign to form value - Vue will make it reactive
+      form.value = formData
+      
+      // Force re-render by incrementing key
+      formKey.value++
+      
+      // Set next position to max of existing positions + 1
+      const maxGroupPos = form.value.groups.length > 0 
+        ? Math.max(...form.value.groups.map(g => g.position)) 
+        : 0
+      const maxResultPos = form.value.results.length > 0 
+        ? Math.max(...form.value.results.map(r => r.position)) 
+        : 0
+      nextPosition.value = Math.max(maxGroupPos, maxResultPos) + 1
+      
+      // Use nextTick to ensure DOM updates after form is set
+      await nextTick()
+      
+      console.log('Form populated from existing view:', form.value)
+      console.log('Groups with category_ids:', form.value.groups.map(g => ({
+        name: g.name,
+        category_ids: g.category_ids,
+        category_ids_type: g.category_ids.map(id => typeof id)
+      })))
+      console.log('Next position for new items:', nextPosition.value)
+      
+      // Only set loading to false AFTER form is fully populated and processed
+      isLoadingExisting.value = false
+    } else {
+      fetchError.value = result.error?.message || 'Falha ao carregar visualização'
+      console.error('Failed to load view:', result.error)
+      isLoadingExisting.value = false
+    }
+  } catch (err: any) {
+    fetchError.value = 'Erro ao carregar visualização'
+    console.error('Error fetching view:', err)
+    isLoadingExisting.value = false
   }
 }
 
@@ -549,6 +674,17 @@ watch(() => form.value, (newForm) => {
 
 // Initialize
 onMounted(async () => {
+  console.log('Edit page mounted, view ID:', viewId.value)
+  
+  // Validate view ID
+  if (isNaN(viewId.value) || viewId.value <= 0) {
+    fetchError.value = 'ID de visualização inválido'
+    isLoadingExisting.value = false
+    return
+  }
+  
+  // Load categories first, then fetch existing view
   await loadCategories()
+  await fetchExistingView()
 })
 </script>

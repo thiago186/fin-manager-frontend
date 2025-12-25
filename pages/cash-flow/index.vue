@@ -79,10 +79,13 @@
           <div
             v-for="view in views"
             :key="view.id"
-            @click="selectView(view.id)"
-            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-indigo-500"
+            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow border-2 border-transparent hover:border-indigo-500"
           >
-            <div class="p-6">
+            <!-- Card Header - Clickable to select view -->
+            <div 
+              @click="selectView(view.id)"
+              class="p-6 cursor-pointer"
+            >
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <h3 class="text-lg font-medium text-gray-900 mb-2">
@@ -104,6 +107,17 @@
               <div class="mt-4 text-xs text-gray-400">
                 Criado em {{ formatDate(view.created_at) }}
               </div>
+            </div>
+            
+            <!-- Card Actions - Edit button -->
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end space-x-2">
+              <NuxtLink
+                :to="`/cash-flow/edit/${view.id}`"
+                class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <PencilIcon class="h-3.5 w-3.5 mr-1.5" />
+                Editar
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -352,7 +366,8 @@ import {
   PlusIcon,
   ChartBarIcon,
   FolderIcon,
-  CalculatorIcon
+  CalculatorIcon,
+  PencilIcon
 } from '@heroicons/vue/24/outline'
 import type { CashFlowReportItem, CashFlowReportGroupItem } from '~/types/cashFlowViews'
 
