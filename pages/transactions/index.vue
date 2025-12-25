@@ -442,6 +442,38 @@
               </TableBody>
             </Table>
           </div>
+          
+          <!-- Pagination Controls -->
+          <div v-if="!loading && transactions.length > 0" class="flex items-center justify-between border-t px-4 py-3">
+            <div class="flex items-center text-sm text-gray-700">
+              <span>
+                Mostrando {{ transactions.length }} de {{ pagination.count }} transações
+              </span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                @click="loadPreviousPage(getApiFilters())"
+                :disabled="!pagination.previous"
+              >
+                Anterior
+              </Button>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm text-gray-700">
+                  Página {{ pagination.currentPage }} de {{ totalPages || 1 }}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                @click="loadNextPage(getApiFilters())"
+                :disabled="!pagination.next"
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -519,7 +551,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group'
 
-import type { Transaction, TransactionTableFilters, TransactionTableSort } from '~/types/transactions'
+import type { Transaction, TransactionTableFilters, TransactionTableSort, TransactionFilters } from '~/types/transactions'
 
 // Page metadata
 definePageMeta({
@@ -534,9 +566,13 @@ const {
   classifying,
   filters,
   sort,
+  pagination,
   filteredTransactions,
   transactionStats,
   loadTransactions,
+  loadNextPage,
+  loadPreviousPage,
+  loadPage,
   deleteTransaction: deleteTransactionApi,
   bulkUpdateTransactions,
   classifyTransactions,
@@ -580,6 +616,7 @@ const tableColumns = [
 
 // Computed
 const hasPendingChanges = computed(() => pendingChanges.value.size > 0)
+const totalPages = computed(() => Math.ceil(pagination.value.count / 100))
 
 // Methods
 const openCreateTransactionModal = (transactionType: 'INCOME' | 'EXPENSE') => {
@@ -604,12 +641,32 @@ const openCreateTransactionModal = (transactionType: 'INCOME' | 'EXPENSE') => {
   showCreateModal.value = true
 }
 
-const handleSort = (key: string) => {
+const handleSort = async (key: string) => {
   const newDirection = sort.value.key === key && sort.value.direction === 'asc' ? 'desc' : 'asc'
   applyTableSort({ key: key as keyof Transaction, direction: newDirection })
+  
+  // Reload current page with filters
+  await loadPage(pagination.value.currentPage, getApiFilters())
 }
 
-const applyFilters = () => {
+const getApiFilters = (): TransactionFilters => {
+  const apiFilters: TransactionFilters = {}
+  if (filters.value.transaction_type && filters.value.transaction_type !== '') {
+    apiFilters.transaction_type = filters.value.transaction_type as 'INCOME' | 'EXPENSE' | 'TRANSFER'
+  }
+  if (filters.value.account_id) {
+    apiFilters.account_id = filters.value.account_id
+  }
+  if (filters.value.category_id) {
+    apiFilters.category_id = filters.value.category_id
+  }
+  if (filters.value.credit_card_id) {
+    apiFilters.credit_card_id = filters.value.credit_card_id
+  }
+  return apiFilters
+}
+
+const applyFilters = async () => {
   let creditCardId: number | null = null
   const creditCardIdValue = localFilters.value.credit_card_id
   
@@ -630,11 +687,15 @@ const applyFilters = () => {
   
   console.log('Applying filters:', filtersToApply)
   applyTableFilters(filtersToApply)
+  
+  // Convert UI filters to API filters and reload with page 1
+  await loadPage(1, getApiFilters())
 }
 
-const clearFilters = () => {
+const clearFilters = async () => {
   localFilters.value = {}
   applyTableFilters({})
+  await loadPage(1)
 }
 
 const editTransaction = (transaction: Transaction) => {

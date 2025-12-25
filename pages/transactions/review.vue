@@ -258,12 +258,44 @@
                       </p>
                     </div>
                   </TableEmpty>
-                </TableBody>
-              </Table>
+              </TableBody>
+            </Table>
+          </div>
+          
+          <!-- Pagination Controls -->
+          <div v-if="!loadingReview && transactionsNeedingReview.length > 0" class="flex items-center justify-between border-t px-4 py-3">
+            <div class="flex items-center text-sm text-gray-700">
+              <span>
+                Mostrando {{ transactionsNeedingReview.length }} de {{ paginationReview.count }} transações
+              </span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div class="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                @click="loadPreviousPageReview()"
+                :disabled="!paginationReview.previous"
+              >
+                Anterior
+              </Button>
+              <div class="flex items-center space-x-1">
+                <span class="text-sm text-gray-700">
+                  Página {{ paginationReview.currentPage }} de {{ totalPagesReview || 1 }}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                @click="loadNextPageReview()"
+                :disabled="!paginationReview.next"
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   
       <!-- Create/Edit Modal -->
       <TransactionModal
@@ -332,7 +364,11 @@
     loadingReview,
     error,
     sort,
+    paginationReview,
     loadTransactionsNeedingReview,
+    loadNextPageReview,
+    loadPreviousPageReview,
+    loadPageReview,
     deleteTransaction: deleteTransactionApi,
     bulkUpdateTransactions,
     applyTableSort,
@@ -370,6 +406,7 @@
   
   // Computed
   const hasPendingChanges = computed(() => pendingChanges.value.size > 0)
+  const totalPagesReview = computed(() => Math.ceil(paginationReview.value.count / 100))
   
   const sortedTransactions = computed(() => {
     const transactions = [...transactionsNeedingReview.value]
@@ -401,9 +438,11 @@
   })
   
   // Methods
-  const handleSort = (key: string) => {
+  const handleSort = async (key: string) => {
     const newDirection = sort.value.key === key && sort.value.direction === 'asc' ? 'desc' : 'asc'
     applyTableSort({ key: key as keyof Transaction, direction: newDirection })
+    // Reload current page
+    await loadPageReview(paginationReview.value.currentPage)
   }
   
   const editTransaction = (transaction: Transaction) => {
@@ -417,8 +456,8 @@
       if (!result.success) {
         alert('Erro ao excluir transação: ' + result.error?.message)
       } else {
-        // Reload transactions needing review after deletion
-        await loadTransactionsNeedingReview()
+        // Reload current page of transactions needing review after deletion
+        await loadPageReview(paginationReview.value.currentPage)
       }
     }
   }
@@ -430,8 +469,8 @@
   
   const handleTransactionSaved = async () => {
     closeModal()
-    // Reload transactions needing review after update
-    await loadTransactionsNeedingReview()
+    // Reload current page of transactions needing review after update
+    await loadPageReview(paginationReview.value.currentPage)
   }
   
   // Account/Credit Card editing methods

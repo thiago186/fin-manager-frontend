@@ -310,4 +310,14 @@ export interface BulkTransactionUpdate {
  */
 export interface BulkTransactionUpdateRequest {
   transactions: BulkTransactionUpdate[]
+}
+
+/**
+ * Paginated transaction response interface
+ */
+export interface PaginatedTransactionResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: Transaction[]
 } 

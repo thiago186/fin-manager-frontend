@@ -7,7 +7,8 @@ import type {
   TransactionApiResult,
   TransactionTableFilters,
   TransactionTableSort,
-  BulkTransactionUpdateRequest
+  BulkTransactionUpdateRequest,
+  PaginatedTransactionResponse
 } from '~/types/transactions'
 
 export const useTransactions = () => {
@@ -22,14 +23,40 @@ export const useTransactions = () => {
   const classifying = ref(false)
   const filters = ref<TransactionTableFilters>({})
   const sort = ref<TransactionTableSort>({ key: 'occurred_at', direction: 'desc' })
+  
+  // Pagination state
+  const pagination = ref<{ count: number; next: string | null; previous: string | null; currentPage: number }>({
+    count: 0,
+    next: null,
+    previous: null,
+    currentPage: 1
+  })
+  const paginationReview = ref<{ count: number; next: string | null; previous: string | null; currentPage: number }>({
+    count: 0,
+    next: null,
+    previous: null,
+    currentPage: 1
+  })
+  const pageSize = 100
 
-  // Load transactions with optional filters
-  const loadTransactions = async (apiFilters?: TransactionFilters): Promise<TransactionApiResult<Transaction[]>> => {
+  // Helper function to extract page number from URL
+  const extractPageFromUrl = (url: string | null): number => {
+    if (!url) return 1
+    const match = url.match(/[?&]page=(\d+)/)
+    return match ? parseInt(match[1], 10) : 1
+  }
+
+  // Load transactions with optional filters and pagination
+  const loadTransactions = async (apiFilters?: TransactionFilters, page: number = 1): Promise<TransactionApiResult<Transaction[]>> => {
     loading.value = true
     error.value = null
     
     try {
       const params = new URLSearchParams()
+      
+      // Add pagination
+      params.append('page', String(page))
+      params.append('page_size', String(pageSize))
       
       // Add API filters
       if (apiFilters?.account_id) {
@@ -48,14 +75,20 @@ export const useTransactions = () => {
         params.append('transaction_type', apiFilters.transaction_type)
       }
 
-      const response = await $fetch<Transaction[]>(`/finance/transactions/?${params}`, {
+      const response = await $fetch<PaginatedTransactionResponse>(`/finance/transactions/?${params}`, {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
       
-      transactions.value = response
-      console.log('Transactions loaded:', response)
-      return { success: true, data: response }
+      transactions.value = response.results
+      pagination.value = {
+        count: response.count,
+        next: response.next,
+        previous: response.previous,
+        currentPage: page
+      }
+      console.log('Transactions loaded:', response.results.length, 'of', response.count)
+      return { success: true, data: response.results }
     } catch (err: any) {
       const errorMessage = err?.data?.message || 'Failed to load transactions'
       error.value = errorMessage
@@ -69,20 +102,30 @@ export const useTransactions = () => {
     }
   }
 
-  // Load transactions needing review
-  const loadTransactionsNeedingReview = async (): Promise<TransactionApiResult<Transaction[]>> => {
+  // Load transactions needing review with pagination
+  const loadTransactionsNeedingReview = async (page: number = 1): Promise<TransactionApiResult<Transaction[]>> => {
     loadingReview.value = true
     error.value = null
     
     try {
-      const response = await $fetch<Transaction[]>('/finance/transactions/needing-review/', {
+      const params = new URLSearchParams()
+      params.append('page', String(page))
+      params.append('page_size', String(pageSize))
+      
+      const response = await $fetch<PaginatedTransactionResponse>('/finance/transactions/needing-review/?' + params.toString(), {
         baseURL: config.public.apiBase,
         credentials: 'include'
       })
       
-      transactionsNeedingReview.value = response
-      console.log('Transactions needing review loaded:', response)
-      return { success: true, data: response }
+      transactionsNeedingReview.value = response.results
+      paginationReview.value = {
+        count: response.count,
+        next: response.next,
+        previous: response.previous,
+        currentPage: page
+      }
+      console.log('Transactions needing review loaded:', response.results.length, 'of', response.count)
+      return { success: true, data: response.results }
     } catch (err: any) {
       const errorMessage = err?.data?.message || 'Falha ao carregar transações para revisão'
       error.value = errorMessage
@@ -467,6 +510,48 @@ export const useTransactions = () => {
     }
   }
 
+  // Pagination navigation methods for transactions
+  const loadNextPage = async (apiFilters?: TransactionFilters): Promise<void> => {
+    if (pagination.value.next) {
+      const nextPage = pagination.value.currentPage + 1
+      await loadTransactions(apiFilters, nextPage)
+    }
+  }
+
+  const loadPreviousPage = async (apiFilters?: TransactionFilters): Promise<void> => {
+    if (pagination.value.previous && pagination.value.currentPage > 1) {
+      const prevPage = pagination.value.currentPage - 1
+      await loadTransactions(apiFilters, prevPage)
+    }
+  }
+
+  const loadPage = async (page: number, apiFilters?: TransactionFilters): Promise<void> => {
+    if (page >= 1) {
+      await loadTransactions(apiFilters, page)
+    }
+  }
+
+  // Pagination navigation methods for review transactions
+  const loadNextPageReview = async (): Promise<void> => {
+    if (paginationReview.value.next) {
+      const nextPage = paginationReview.value.currentPage + 1
+      await loadTransactionsNeedingReview(nextPage)
+    }
+  }
+
+  const loadPreviousPageReview = async (): Promise<void> => {
+    if (paginationReview.value.previous && paginationReview.value.currentPage > 1) {
+      const prevPage = paginationReview.value.currentPage - 1
+      await loadTransactionsNeedingReview(prevPage)
+    }
+  }
+
+  const loadPageReview = async (page: number): Promise<void> => {
+    if (page >= 1) {
+      await loadTransactionsNeedingReview(page)
+    }
+  }
+
   // Initialize transactions data
   const initialize = async (): Promise<void> => {
     console.log('Initializing transactions...')
@@ -484,6 +569,8 @@ export const useTransactions = () => {
     classifying: readonly(classifying),
     filters: readonly(filters),
     sort: readonly(sort),
+    pagination: readonly(pagination),
+    paginationReview: readonly(paginationReview),
     
     // Computed
     filteredTransactions: getFilteredTransactions,
@@ -492,6 +579,12 @@ export const useTransactions = () => {
     // Methods
     loadTransactions,
     loadTransactionsNeedingReview,
+    loadNextPage,
+    loadPreviousPage,
+    loadPage,
+    loadNextPageReview,
+    loadPreviousPageReview,
+    loadPageReview,
     createTransaction,
     updateTransaction,
     deleteTransaction,
