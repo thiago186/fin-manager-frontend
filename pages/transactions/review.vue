@@ -30,7 +30,6 @@
                 <CardDescription>{{ transactionsNeedingReview.length }} transações encontradas</CardDescription>
               </div>
               <Button
-                v-if="hasPendingChanges"
                 @click="handleSaveChanges"
                 :disabled="savingChanges"
               >
@@ -658,15 +657,29 @@
   }
   
   const handleSaveChanges = async () => {
-    if (pendingChanges.value.size === 0) return
-    
     savingChanges.value = true
     
     try {
-      const updates = Array.from(pendingChanges.value.entries()).map(([id, changes]) => ({
+      // Collect all updates: pending changes + mark all as reviewed
+      const updatesMap = new Map<number, { account_id?: number | null, credit_card_id?: number | null, category_id?: number | null, subcategory_id?: number | null, need_review?: boolean }>()
+      
+      // Add pending changes
+      pendingChanges.value.forEach((changes, id) => {
+        updatesMap.set(id, { ...changes })
+      })
+      
+      // Mark all transactions needing review as reviewed (even if no pending changes)
+      transactionsNeedingReview.value.forEach(transaction => {
+        const existingUpdate = updatesMap.get(transaction.id) || {}
+        updatesMap.set(transaction.id, {
+          ...existingUpdate,
+          need_review: false
+        })
+      })
+      
+      const updates = Array.from(updatesMap.entries()).map(([id, changes]) => ({
         id,
-        ...changes,
-        need_review: false // Mark as reviewed when saving changes
+        ...changes
       }))
       
       const result = await bulkUpdateTransactions({ transactions: updates })
@@ -675,9 +688,9 @@
         pendingChanges.value.clear()
         editingCellId.value = null
         editingSubcategoryCellId.value = null
-        // Reload transactions needing review after bulk update
-        await loadTransactionsNeedingReview()
         alert('Alterações salvas e transações marcadas como revisadas!')
+        // Navigate back to transactions page
+        await navigateTo('/transactions')
       } else {
         alert('Erro ao salvar alterações: ' + (result.error?.message || 'Erro desconhecido'))
       }
