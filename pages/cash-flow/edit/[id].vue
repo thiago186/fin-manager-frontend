@@ -291,26 +291,40 @@
         </Card>
 
         <!-- Submit Button -->
-        <div class="flex justify-end gap-4">
-          <NuxtLink to="/cash-flow">
-            <Button type="button" variant="outline">
-              Cancelar
+        <div class="flex flex-col items-end gap-4">
+          <!-- Category Selection Warning -->
+          <Alert v-if="categorySelectionWarning" variant="default" class="w-full max-w-md">
+            <ExclamationTriangleIcon class="h-4 w-4" />
+            <AlertTitle>Atenção</AlertTitle>
+            <AlertDescription>
+              {{ categorySelectionWarning.message }}
+              <span class="block mt-1 text-xs text-gray-600">
+                Total de categorias selecionadas: {{ categorySelectionWarning.selectedCount }} / {{ categorySelectionWarning.totalCount }}
+              </span>
+            </AlertDescription>
+          </Alert>
+          
+          <div class="flex justify-end gap-4">
+            <NuxtLink to="/cash-flow">
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </NuxtLink>
+            <Button 
+              type="submit" 
+              :disabled="isSubmitting || !isFormValid"
+              @click="handleSubmit"
+            >
+              <span v-if="isSubmitting" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Salvando...
+              </span>
+              <span v-else>Atualizar Visualização</span>
             </Button>
-          </NuxtLink>
-          <Button 
-            type="submit" 
-            :disabled="isSubmitting || !isFormValid"
-            @click="handleSubmit"
-          >
-            <span v-if="isSubmitting" class="flex items-center">
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Salvando...
-            </span>
-            <span v-else>Atualizar Visualização</span>
-          </Button>
+          </div>
         </div>
         
         <!-- Validation Help Text -->
@@ -455,6 +469,36 @@ const isFormValid = computed(() => {
   
   console.log('Form is valid!')
   return true
+})
+
+// Computed: check if all categories are selected across all groups
+const categorySelectionWarning = computed(() => {
+  if (categories.value.length === 0 || form.value.groups.length === 0) {
+    return null
+  }
+  
+  // Count total category selections (including duplicates)
+  const totalSelected = form.value.groups.reduce((sum, group) => sum + group.category_ids.length, 0)
+  
+  // Get total categories in database
+  const totalCategories = categories.value.length
+  
+  // Simple comparison
+  if (totalSelected > totalCategories) {
+    return {
+      message: 'Você provavelmente selecionou categorias duplicadas em múltiplos grupos.',
+      selectedCount: totalSelected,
+      totalCount: totalCategories
+    }
+  } else if (totalSelected < totalCategories) {
+    return {
+      message: 'Você provavelmente esqueceu de selecionar algumas categorias.',
+      selectedCount: totalSelected,
+      totalCount: totalCategories
+    }
+  }
+  
+  return null
 })
 
 // Helper function to check if a category is selected in a group
