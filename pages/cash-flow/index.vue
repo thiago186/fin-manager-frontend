@@ -276,7 +276,11 @@
                       :class="[
                         row.type === 'result' ? 'font-semibold' : '',
                         isZeroValue(row.monthly_totals[String(month)] || '0') ? 'text-gray-400' : 
-                        parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                        row.type === 'group' 
+                          ? (parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-green-500' : 'text-red-400')
+                          : row.type === 'result'
+                          ? (parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-green-600' : 'text-red-600')
+                          : (parseFloat(row.monthly_totals[String(month)] || '0') >= 0 ? 'text-gray-900' : 'text-red-600')
                       ]"
                     >
                       {{ formatValue(row.monthly_totals[String(month)] || '0') }}
@@ -285,7 +289,11 @@
                       class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                       :class="[
                         isZeroValue(row.annual_total || '0') ? 'text-gray-400' : 
-                        parseFloat(row.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600'
+                        row.type === 'group' 
+                          ? (parseFloat(row.annual_total || '0') >= 0 ? 'text-green-500' : 'text-red-400')
+                          : row.type === 'result'
+                          ? (parseFloat(row.annual_total || '0') >= 0 ? 'text-green-600' : 'text-red-600')
+                          : (parseFloat(row.annual_total || '0') >= 0 ? 'text-gray-900' : 'text-red-600')
                       ]"
                     >
                       {{ formatValue(row.annual_total || '0.00') }}
