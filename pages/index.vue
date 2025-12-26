@@ -17,10 +17,10 @@
           <h2 class="text-xl font-semibold text-gray-900 mb-2">Welcome back!</h2>
           <p class="text-gray-600 mb-6">You are successfully logged in.</p>
           <NuxtLink
-            to="/dashboard"
+            to="/transactions"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors inline-block"
           >
-            Go to Dashboard
+            See your transactions
           </NuxtLink>
         </div>
       </div>
