@@ -65,6 +65,9 @@ export const useTransactions = () => {
       if (apiFilters?.category_id) {
         params.append('category_id', String(apiFilters.category_id))
       }
+      if (apiFilters?.subcategory_id) {
+        params.append('subcategory_id', String(apiFilters.subcategory_id))
+      }
       if (apiFilters?.credit_card_id) {
         params.append('credit_card_id', String(apiFilters.credit_card_id))
       }
@@ -379,6 +382,14 @@ export const useTransactions = () => {
       filtered = filtered.filter(transaction => 
         transaction.category_id === filters.value.category_id
       )
+    }
+
+    // Apply subcategory filter
+    if (filters.value.subcategory_id) {
+      filtered = filtered.filter(transaction => {
+        const transactionSubcategoryId = transaction.subcategory_id ?? transaction.subcategory?.id
+        return transactionSubcategoryId === filters.value.subcategory_id
+      })
     }
 
     // Apply date range filter

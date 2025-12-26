@@ -143,6 +143,7 @@ export interface UpdateTransactionRequest {
 export interface TransactionFilters {
   account_id?: number | null
   category_id?: number | null
+  subcategory_id?: number | null
   credit_card_id?: number | null
   occurred_at?: string | null
   transaction_type?: TransactionType | null
@@ -279,6 +280,7 @@ export interface TransactionTableFilters {
   transaction_type?: TransactionType | ''
   account_id?: number | null
   category_id?: number | null
+  subcategory_id?: number | null
   credit_card_id?: number | null
   date_from?: string
   date_to?: string

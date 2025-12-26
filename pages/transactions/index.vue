@@ -102,7 +102,7 @@
           <CardDescription>Refine os resultados de transações.</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-4">
             <div class="space-y-2">
               <Label>Buscar</Label>
               <Input
@@ -141,6 +141,25 @@
                     :value="creditCard.id"
                   >
                     {{ creditCard.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label>Subcategoria</Label>
+              <Select v-model="localFilters.subcategory_id">
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">Todas</SelectItem>
+                  <SelectItem
+                    v-for="subcategory in subcategories"
+                    :key="subcategory.id"
+                    :value="subcategory.id"
+                  >
+                    {{ subcategory.name }}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -659,6 +678,9 @@ const getApiFilters = (): TransactionFilters => {
   }
   if (filters.value.category_id) {
     apiFilters.category_id = filters.value.category_id
+  }
+  if (filters.value.subcategory_id) {
+    apiFilters.subcategory_id = filters.value.subcategory_id
   }
   if (filters.value.credit_card_id) {
     apiFilters.credit_card_id = filters.value.credit_card_id
