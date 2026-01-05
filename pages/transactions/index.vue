@@ -660,12 +660,11 @@ const openCreateTransactionModal = (transactionType: 'INCOME' | 'EXPENSE') => {
   showCreateModal.value = true
 }
 
-const handleSort = async (key: string) => {
+const handleSort = (key: string) => {
   const newDirection = sort.value.key === key && sort.value.direction === 'asc' ? 'desc' : 'asc'
   applyTableSort({ key: key as keyof Transaction, direction: newDirection })
-  
-  // Reload current page with filters
-  await loadPage(pagination.value.currentPage, getApiFilters())
+
+  // No API call needed - filteredTransactions computed property will handle sorting locally
 }
 
 const getApiFilters = (): TransactionFilters => {
